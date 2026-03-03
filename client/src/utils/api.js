@@ -35,7 +35,9 @@ export const authApi = {
 
 export const leadsApi = {
   list: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    // Filter out undefined/null values to avoid sending ?status=undefined
+    const clean = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(clean).toString();
     return api(`/leads${qs ? '?' + qs : ''}`);
   },
   get: (leadId) => api(`/leads/${leadId}`),

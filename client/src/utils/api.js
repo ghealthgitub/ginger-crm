@@ -33,9 +33,17 @@ export const authApi = {
   changePassword: (currentPassword, newPassword) => api('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 };
 
+export const usersApi = {
+  list: () => api('/auth/users'),
+  create: (data) => api('/auth/users', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  resetPassword: (id, newPassword) => api(`/auth/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
+  remove: (id) => api(`/auth/users/${id}`, { method: 'DELETE' }),
+  reactivate: (id) => api(`/auth/users/${id}/reactivate`, { method: 'POST' }),
+};
+
 export const leadsApi = {
   list: (params = {}) => {
-    // Filter out undefined/null values to avoid sending ?status=undefined
     const clean = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
     const qs = new URLSearchParams(clean).toString();
     return api(`/leads${qs ? '?' + qs : ''}`);

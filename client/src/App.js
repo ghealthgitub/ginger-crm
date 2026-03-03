@@ -4,7 +4,7 @@ import { authApi, leadsApi, usersApi } from './utils/api';
 // ============================================================
 // CONSTANTS
 // ============================================================
-const LOGO_URL = 'https://ghealth121.com/wp-content/uploads/2022/09/Ginger-Healthcare-Logo.png';
+const LOGO_URL = '/ginger-logo.jpg';
 
 const STATUSES = [
   { key: 'new', label: 'New Lead', color: '#3b82f6', bg: '#eff6ff', icon: '🆕' },
@@ -205,8 +205,8 @@ function CRMApp({ user, onLogout }) {
 
     return (
       <div style={{ background: 'linear-gradient(135deg, #00315a 0%, #001d36 100%)', color: 'white', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src={LOGO_URL} alt="Ginger" style={{ height: 28, borderRadius: 4 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setView('dashboard')}>
+          <img src={LOGO_URL} alt="Ginger" style={{ height: 32, borderRadius: '50%' }} />
           <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.3 }}>Ginger CRM</span>
           {user.role !== 'admin' && <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.12)', padding: '2px 8px', borderRadius: 10, marginLeft: 4 }}>{user.name} · {ROLE_LABELS[user.role]}</span>}
         </div>

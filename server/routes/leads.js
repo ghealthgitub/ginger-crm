@@ -13,7 +13,66 @@ router.post('/webhook', async (req, res) => {
     const d = req.body;
     const leadId = d.leadId || `P${Date.now()}`;
 
-    // Round-robin counselor assignment if not specified
+    // Check if this lead already exists (early capture → later update with contact preference)
+    let existing = null;
+    if (d.email && d.phone) {
+      const check = await pool.query(
+        'SELECT lead_id, assigned_counselor FROM leads WHERE email = $1 AND phone = $2 AND created_at > NOW() - INTERVAL \'1 hour\' ORDER BY created_at DESC LIMIT 1',
+        [d.email, d.phone]
+      );
+      if (check.rows.length > 0) existing = check.rows[0];
+    }
+
+    // If lead exists and this is an update (user picked WhatsApp/Telegram/Email)
+    if (existing && d.contactPreference && d.contactPreference !== 'pending') {
+      await pool.query(`
+        UPDATE leads SET 
+          service_type = COALESCE(NULLIF($1, ''), service_type),
+          patient_relation = COALESCE(NULLIF($2, ''), patient_relation),
+          relationship_type = COALESCE(NULLIF($3, ''), relationship_type),
+          patient_prefix = COALESCE(NULLIF($4, ''), patient_prefix),
+          patient_first_name = COALESCE(NULLIF($5, ''), patient_first_name),
+          patient_last_name = COALESCE(NULLIF($6, ''), patient_last_name),
+          patient_age = COALESCE(NULLIF($7, ''), patient_age),
+          treatment_sought = COALESCE(NULLIF($8, ''), treatment_sought),
+          urgency_level = COALESCE(NULLIF($9, ''), urgency_level),
+          message = COALESCE(NULLIF($10, ''), message),
+          clinical_notes = COALESCE(NULLIF($11, ''), clinical_notes),
+          contact_preference = $12,
+          is_doctor = $13,
+          doctor_specialty = COALESCE(NULLIF($14, ''), doctor_specialty),
+          doctor_hospital = COALESCE(NULLIF($15, ''), doctor_hospital),
+          doctor_city = COALESCE(NULLIF($16, ''), doctor_city),
+          doctor_country = COALESCE(NULLIF($17, ''), doctor_country),
+          primary_diagnosis = COALESCE(NULLIF($18, ''), primary_diagnosis),
+          updated_at = NOW()
+        WHERE lead_id = $19
+      `, [
+        d.serviceType || '', d.patientRelation || '', d.relationshipType || '',
+        d.patientPrefix || '', d.patientFirstName || '', d.patientLastName || '',
+        d.patientAge || '', d.treatmentSought || '', d.urgencyLevel || '',
+        d.message || '', d.clinicalNotes || '', d.contactPreference,
+        d.isDoctor || false, d.doctorSpecialty || '', d.doctorHospital || '',
+        d.doctorCity || '', d.doctorCountry || '', d.primaryDiagnosis || '',
+        existing.lead_id
+      ]);
+
+      // Update priority if urgency provided
+      if (d.urgencyLevel) {
+        let priority = 'medium';
+        if (d.urgencyLevel === 'Emergency' || d.urgencyLevel === 'Urgent') priority = 'high';
+        else if (d.urgencyLevel === 'Routine') priority = 'low';
+        await pool.query('UPDATE leads SET priority = $1 WHERE lead_id = $2', [priority, existing.lead_id]);
+      }
+
+      await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
+        [existing.lead_id, 'System', 'lead_updated', `Contact preference: ${d.contactPreference}, Treatment: ${d.treatmentSought || 'N/A'}`]);
+
+      console.log(`Lead updated: ${existing.lead_id} → ${d.contactPreference}`);
+      return res.json({ success: true, leadId: existing.lead_id, counselor: existing.assigned_counselor, updated: true });
+    }
+
+    // New lead — assign counselor via round-robin
     let counselor = d.assignedCounselor;
     if (!counselor) {
       const countRes = await pool.query(`
@@ -27,7 +86,6 @@ router.post('/webhook', async (req, res) => {
       counselor = Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
     }
 
-    // Determine priority based on urgency
     let priority = 'medium';
     if (d.urgencyLevel === 'Emergency') priority = 'high';
     else if (d.urgencyLevel === 'Urgent') priority = 'high';
@@ -57,14 +115,15 @@ router.post('/webhook', async (req, res) => {
 
     const lead = result.rows[0];
 
-    // Send email notification (non-blocking)
-    const counselorRes = await pool.query('SELECT email FROM users WHERE display_name = $1', [counselor]);
-    const counselorEmail = counselorRes.rows[0]?.email;
-    sendNewLeadNotification(lead, counselorEmail).catch(() => {});
+    // Only send email notification for non-pending leads (or first capture)
+    if (d.contactPreference !== 'pending') {
+      const counselorRes = await pool.query('SELECT email FROM users WHERE display_name = $1', [counselor]);
+      const counselorEmail = counselorRes.rows[0]?.email;
+      sendNewLeadNotification(lead, counselorEmail).catch(() => {});
+    }
 
-    // Log activity
     await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
-      [leadId, 'System', 'lead_created', `New lead from ${d.nationality} via ${d.contactPreference}`]);
+      [leadId, 'System', 'lead_created', `New lead from ${d.nationality || 'unknown'}${d.contactPreference === 'pending' ? ' (early capture)' : ' via ' + d.contactPreference}`]);
 
     res.json({ success: true, leadId, counselor });
   } catch (e) {
@@ -74,133 +133,9 @@ router.post('/webhook', async (req, res) => {
 });
 
 // ============================================================
-// PROTECTED: CRM API endpoints
+// STATIC ROUTES — must come BEFORE /:leadId
 // ============================================================
 
-// Get all leads (with filtering)
-router.get('/', auth, async (req, res) => {
-  try {
-    const { status, counselor, urgency, search, sort, order, limit, offset } = req.query;
-    let where = [];
-    let params = [];
-    let i = 1;
-
-    // Counselors can only see their own leads unless admin
-    if (req.user.role === 'counselor') {
-      where.push(`assigned_counselor = $${i++}`);
-      params.push(req.user.name);
-    } else if (counselor && counselor !== 'all') {
-      where.push(`assigned_counselor = $${i++}`);
-      params.push(counselor);
-    }
-
-    if (status && status !== 'all') { where.push(`status = $${i++}`); params.push(status); }
-    if (urgency && urgency !== 'all') { where.push(`urgency_level = $${i++}`); params.push(urgency); }
-    if (search) {
-      where.push(`(
-        first_name ILIKE $${i} OR last_name ILIKE $${i} OR email ILIKE $${i} 
-        OR phone ILIKE $${i} OR nationality ILIKE $${i} OR treatment_sought ILIKE $${i}
-        OR message ILIKE $${i}
-      )`);
-      params.push(`%${search}%`);
-      i++;
-    }
-
-    const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
-    const sortField = sort || 'created_at';
-    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
-    const lim = Math.min(parseInt(limit) || 100, 500);
-    const off = parseInt(offset) || 0;
-
-    const countRes = await pool.query(`SELECT COUNT(*) FROM leads ${whereClause}`, params);
-    const dataRes = await pool.query(
-      `SELECT * FROM leads ${whereClause} ORDER BY ${sortField} ${sortOrder} LIMIT ${lim} OFFSET ${off}`,
-      params
-    );
-
-    res.json({ total: parseInt(countRes.rows[0].count), leads: dataRes.rows });
-  } catch (e) {
-    console.error('Get leads error:', e);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get single lead with notes
-router.get('/:leadId', auth, async (req, res) => {
-  try {
-    const leadRes = await pool.query('SELECT * FROM leads WHERE lead_id = $1', [req.params.leadId]);
-    if (leadRes.rows.length === 0) return res.status(404).json({ error: 'Lead not found' });
-
-    const notesRes = await pool.query('SELECT * FROM notes WHERE lead_id = $1 ORDER BY created_at DESC', [req.params.leadId]);
-    const activityRes = await pool.query('SELECT * FROM activity_log WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 50', [req.params.leadId]);
-
-    res.json({ ...leadRes.rows[0], notes: notesRes.rows, activity: activityRes.rows });
-  } catch (e) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Update lead
-router.patch('/:leadId', auth, async (req, res) => {
-  try {
-    const allowed = ['status', 'priority', 'assigned_counselor', 'follow_up_date', 'follow_up_note', 'urgency_level'];
-    const updates = [];
-    const params = [];
-    let i = 1;
-
-    for (const [key, value] of Object.entries(req.body)) {
-      if (allowed.includes(key)) {
-        updates.push(`${key} = $${i++}`);
-        params.push(value);
-      }
-    }
-
-    if (updates.length === 0) return res.status(400).json({ error: 'No valid fields to update' });
-
-    updates.push(`updated_at = NOW()`);
-    params.push(req.params.leadId);
-
-    const result = await pool.query(
-      `UPDATE leads SET ${updates.join(', ')} WHERE lead_id = $${i} RETURNING *`,
-      params
-    );
-
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Lead not found' });
-
-    // Log activity
-    const changes = Object.entries(req.body).filter(([k]) => allowed.includes(k)).map(([k, v]) => `${k}: ${v}`).join(', ');
-    await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
-      [req.params.leadId, req.user.name, 'lead_updated', changes]);
-
-    res.json(result.rows[0]);
-  } catch (e) {
-    console.error('Update lead error:', e);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Add note
-router.post('/:leadId/notes', auth, async (req, res) => {
-  try {
-    const { text } = req.body;
-    if (!text?.trim()) return res.status(400).json({ error: 'Note text required' });
-
-    const result = await pool.query(
-      'INSERT INTO notes (lead_id, author, text) VALUES ($1, $2, $3) RETURNING *',
-      [req.params.leadId, req.user.name, text.trim()]
-    );
-
-    await pool.query('UPDATE leads SET updated_at = NOW() WHERE lead_id = $1', [req.params.leadId]);
-    await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
-      [req.params.leadId, req.user.name, 'note_added', text.trim().substring(0, 100)]);
-
-    res.json(result.rows[0]);
-  } catch (e) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Dashboard stats
 router.get('/stats/dashboard', auth, async (req, res) => {
   try {
     let counselorFilter = '';
@@ -226,13 +161,10 @@ router.get('/stats/dashboard', auth, async (req, res) => {
 
     const byStatus = {};
     statusRes.rows.forEach(r => byStatus[r.status] = parseInt(r.count));
-
     const byCounselor = {};
     counselorRes.rows.forEach(r => byCounselor[r.assigned_counselor] = parseInt(r.count));
-
     const byContact = {};
     contactRes.rows.forEach(r => byContact[r.contact_preference] = parseInt(r.count));
-
     const total = Object.values(byStatus).reduce((a, b) => a + b, 0);
 
     res.json({
@@ -240,9 +172,7 @@ router.get('/stats/dashboard', auth, async (req, res) => {
       today: parseInt(todayRes.rows[0].count),
       urgent: parseInt(urgentRes.rows[0].count),
       followUpDue: parseInt(followUpRes.rows[0].count),
-      byStatus,
-      byCounselor,
-      byContact,
+      byStatus, byCounselor, byContact,
       weekly: weeklyRes.rows,
       conversionRate: total > 0 ? Math.round(((byStatus.converted || 0) / total) * 100) : 0
     });
@@ -252,7 +182,6 @@ router.get('/stats/dashboard', auth, async (req, res) => {
   }
 });
 
-// Counselor performance stats (admin)
 router.get('/stats/performance', auth, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -274,7 +203,6 @@ router.get('/stats/performance', auth, async (req, res) => {
   }
 });
 
-// Export leads as CSV
 router.get('/export/csv', auth, async (req, res) => {
   try {
     let where = '';
@@ -322,7 +250,6 @@ router.get('/export/csv', auth, async (req, res) => {
   }
 });
 
-// Follow-ups due today/overdue
 router.get('/follow-ups/due', auth, async (req, res) => {
   try {
     let counselorFilter = '';
@@ -339,6 +266,128 @@ router.get('/follow-ups/due', auth, async (req, res) => {
       ORDER BY follow_up_date ASC
     `, params);
     res.json(result.rows);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get all leads (with filtering)
+router.get('/', auth, async (req, res) => {
+  try {
+    const { status, counselor, urgency, search, sort, order, limit, offset } = req.query;
+    let where = [];
+    let params = [];
+    let i = 1;
+
+    if (req.user.role === 'counselor') {
+      where.push(`assigned_counselor = $${i++}`);
+      params.push(req.user.name);
+    } else if (counselor && counselor !== 'all') {
+      where.push(`assigned_counselor = $${i++}`);
+      params.push(counselor);
+    }
+
+    if (status && status !== 'all') { where.push(`status = $${i++}`); params.push(status); }
+    if (urgency && urgency !== 'all') { where.push(`urgency_level = $${i++}`); params.push(urgency); }
+    if (search) {
+      where.push(`(
+        first_name ILIKE $${i} OR last_name ILIKE $${i} OR email ILIKE $${i} 
+        OR phone ILIKE $${i} OR nationality ILIKE $${i} OR treatment_sought ILIKE $${i}
+        OR message ILIKE $${i}
+      )`);
+      params.push(`%${search}%`);
+      i++;
+    }
+
+    const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
+    const sortField = sort || 'created_at';
+    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+    const lim = Math.min(parseInt(limit) || 100, 500);
+    const off = parseInt(offset) || 0;
+
+    const countRes = await pool.query(`SELECT COUNT(*) FROM leads ${whereClause}`, params);
+    const dataRes = await pool.query(
+      `SELECT * FROM leads ${whereClause} ORDER BY ${sortField} ${sortOrder} LIMIT ${lim} OFFSET ${off}`,
+      params
+    );
+
+    res.json({ total: parseInt(countRes.rows[0].count), leads: dataRes.rows });
+  } catch (e) {
+    console.error('Get leads error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============================================================
+// DYNAMIC ROUTES — must be LAST (/:leadId matches anything)
+// ============================================================
+
+router.get('/:leadId', auth, async (req, res) => {
+  try {
+    const leadRes = await pool.query('SELECT * FROM leads WHERE lead_id = $1', [req.params.leadId]);
+    if (leadRes.rows.length === 0) return res.status(404).json({ error: 'Lead not found' });
+
+    const notesRes = await pool.query('SELECT * FROM notes WHERE lead_id = $1 ORDER BY created_at DESC', [req.params.leadId]);
+    const activityRes = await pool.query('SELECT * FROM activity_log WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 50', [req.params.leadId]);
+
+    res.json({ ...leadRes.rows[0], notes: notesRes.rows, activity: activityRes.rows });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.patch('/:leadId', auth, async (req, res) => {
+  try {
+    const allowed = ['status', 'priority', 'assigned_counselor', 'follow_up_date', 'follow_up_note', 'urgency_level'];
+    const updates = [];
+    const params = [];
+    let i = 1;
+
+    for (const [key, value] of Object.entries(req.body)) {
+      if (allowed.includes(key)) {
+        updates.push(`${key} = $${i++}`);
+        params.push(value);
+      }
+    }
+
+    if (updates.length === 0) return res.status(400).json({ error: 'No valid fields to update' });
+
+    updates.push(`updated_at = NOW()`);
+    params.push(req.params.leadId);
+
+    const result = await pool.query(
+      `UPDATE leads SET ${updates.join(', ')} WHERE lead_id = $${i} RETURNING *`,
+      params
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Lead not found' });
+
+    const changes = Object.entries(req.body).filter(([k]) => allowed.includes(k)).map(([k, v]) => `${k}: ${v}`).join(', ');
+    await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
+      [req.params.leadId, req.user.name, 'lead_updated', changes]);
+
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error('Update lead error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/:leadId/notes', auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: 'Note text required' });
+
+    const result = await pool.query(
+      'INSERT INTO notes (lead_id, author, text) VALUES ($1, $2, $3) RETURNING *',
+      [req.params.leadId, req.user.name, text.trim()]
+    );
+
+    await pool.query('UPDATE leads SET updated_at = NOW() WHERE lead_id = $1', [req.params.leadId]);
+    await pool.query('INSERT INTO activity_log (lead_id, user_name, action, details) VALUES ($1, $2, $3, $4)',
+      [req.params.leadId, req.user.name, 'note_added', text.trim().substring(0, 100)]);
+
+    res.json(result.rows[0]);
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
   }

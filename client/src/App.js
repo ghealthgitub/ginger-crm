@@ -156,57 +156,63 @@ const EditableField = ({ label, value, field, onSave, type = 'text', options, mu
     setEditing(false);
   };
 
+  const editInputFull = { width: '100%', padding: '10px 12px', borderRadius: 8, border: `2px solid ${C.orange}40`, fontSize: 14, outline: 'none', fontFamily: FONT, color: C.dark, boxSizing: 'border-box', background: C.white, transition: 'border-color 0.2s' };
+
+  // --- Display mode (compact, no wasted space) ---
   if (!editing) {
     let displayVal = value || '—';
     if (multiOptions) {
       try { const arr = JSON.parse(value || '[]'); displayVal = arr.length > 0 ? arr.join(', ') : '—'; } catch { displayVal = value || '—'; }
     }
     return (
-      <div style={{ marginBottom: 2, cursor: 'pointer', padding: '6px 8px', borderRadius: 8, transition: 'background 0.15s', background: hovered ? `${C.orange}06` : 'transparent' }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={() => setEditing(true)}>
-        <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FONT, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-          {label} {hovered && <span style={{ fontSize: 9, color: C.orange, opacity: 0.6 }}>✎</span>}
+      <div style={{ cursor: 'pointer', padding: '5px 6px', borderRadius: 6, transition: 'background 0.12s', background: hovered ? `${C.orange}06` : 'transparent', minWidth: 0 }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={() => setEditing(true)}>
+        <div style={{ fontSize: 9.5, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT, marginBottom: 1 }}>{label}</div>
+        <div style={{ fontSize: 13.5, color: displayVal === '—' ? C.slateLight : C.dark, fontWeight: displayVal === '—' ? 400 : 500, lineHeight: 1.4, wordBreak: 'break-word', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {displayVal}
+          {hovered && <span style={{ fontSize: 11, color: C.orange, opacity: 0.5, flexShrink: 0 }}>✎</span>}
         </div>
-        <div style={{ fontSize: 14, color: displayVal === '—' ? C.slateLight : C.dark, fontWeight: 500, lineHeight: 1.5, wordBreak: 'break-word', fontFamily: FONT }}>{displayVal}</div>
       </div>
     );
   }
 
+  // --- Multi-select mode ---
   if (multiOptions) {
     return (
-      <div style={{ marginBottom: 2 }}>
-        <div style={{ fontSize: 10, color: C.teal, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FONT }}>{label}</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, margin: '4px 0' }}>
+      <div style={{ padding: '6px', background: `${C.orange}04`, borderRadius: 8, border: `1px solid ${C.orange}15` }}>
+        <div style={{ fontSize: 9.5, color: C.orange, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT, marginBottom: 6 }}>{label}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
           {multiOptions.map(opt => (
             <button key={opt} onClick={() => setSelectedMulti(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt])}
-              style={{ padding: '4px 9px', borderRadius: 5, border: `1.5px solid ${selectedMulti.includes(opt) ? C.teal : C.border}`, background: selectedMulti.includes(opt) ? C.tealBg : C.white, fontSize: 11, cursor: 'pointer', color: selectedMulti.includes(opt) ? C.teal : C.slateDark, fontWeight: selectedMulti.includes(opt) ? 600 : 400, fontFamily: FONT }}>
+              style={{ padding: '5px 11px', borderRadius: 6, border: `1.5px solid ${selectedMulti.includes(opt) ? C.orange : C.border}`, background: selectedMulti.includes(opt) ? `${C.orange}10` : C.white, fontSize: 12, cursor: 'pointer', color: selectedMulti.includes(opt) ? C.orange : C.slateDark, fontWeight: selectedMulti.includes(opt) ? 600 : 400, fontFamily: FONT, transition: 'all 0.15s' }}>
               {opt}
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-          <button onClick={save} style={btnSmallTeal}>Save</button>
-          <button onClick={() => setEditing(false)} style={btnSmallGhost}>Cancel</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={save} style={{ ...btnSmallTeal, padding: '7px 18px' }}>Save</button>
+          <button onClick={() => setEditing(false)} style={{ ...btnSmallGhost, padding: '7px 14px' }}>Cancel</button>
         </div>
       </div>
     );
   }
 
+  // --- Edit mode (full-width inputs) ---
   return (
-    <div style={{ marginBottom: 2 }}>
-      <div style={{ fontSize: 10, color: C.teal, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FONT }}>{label}</div>
+    <div style={{ padding: '6px', background: `${C.orange}04`, borderRadius: 8, border: `1px solid ${C.orange}15` }}>
+      <div style={{ fontSize: 9.5, color: C.orange, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT, marginBottom: 4 }}>{label}</div>
       {options ? (
-        <select value={val} onChange={e => setVal(e.target.value)} style={inputSmall} autoFocus>
+        <select value={val} onChange={e => setVal(e.target.value)} style={editInputFull} autoFocus>
           <option value="">— Select —</option>
           {options.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
       ) : type === 'textarea' ? (
-        <textarea value={val} onChange={e => setVal(e.target.value)} style={{ ...inputSmall, minHeight: 56, resize: 'vertical' }} autoFocus placeholder={placeholder} />
+        <textarea value={val} onChange={e => setVal(e.target.value)} style={{ ...editInputFull, minHeight: 90, resize: 'vertical' }} autoFocus placeholder={placeholder} />
       ) : (
-        <input type={type} value={val} onChange={e => setVal(e.target.value)} style={inputSmall} autoFocus placeholder={placeholder} />
+        <input type={type} value={val} onChange={e => setVal(e.target.value)} style={editInputFull} autoFocus placeholder={placeholder} />
       )}
-      <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-        <button onClick={save} style={btnSmallTeal}>Save</button>
-        <button onClick={() => { setEditing(false); setVal(value || ''); }} style={btnSmallGhost}>Cancel</button>
+      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+        <button onClick={save} style={{ ...btnSmallTeal, padding: '7px 18px' }}>Save</button>
+        <button onClick={() => { setEditing(false); setVal(value || ''); }} style={{ ...btnSmallGhost, padding: '7px 14px' }}>Cancel</button>
       </div>
     </div>
   );
@@ -820,31 +826,32 @@ function CRMApp({ user, onLogout }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
               {/* CARD: Lead Source & Tracking */}
-              <div className="detail-card" style={{ background: `linear-gradient(135deg, ${C.blueBg}, ${C.cream})`, borderRadius: 12, border: `1px solid ${C.blue}15`, padding: '16px 20px', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.blue}12`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 14 }}>🔗</span> Lead Source & Tracking
+              <div style={{ background: `linear-gradient(135deg, ${C.blueBg}, ${C.cream})`, borderRadius: 12, border: `1px solid ${C.blue}15`, padding: '14px 18px', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.blue}12`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ fontSize: 13 }}>🔗</span> Lead Source
                 </div>
-                {/* Row 1: Source Page */}
-                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '10px 14px', marginBottom: 8 }}>
-                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 3 }}>Source Page</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>{lead.page_url ? <a href={lead.page_url} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.page_title || lead.page_url}</a> : (lead.page_title || '—')}</div>
+                {/* Row 1: Source URL (not clickable to avoid ad charges) */}
+                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 12px', marginBottom: 6 }}>
+                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: C.slateDark, wordBreak: 'break-all', fontFamily: 'monospace', userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div>
                 </div>
-                {/* Row 2: Referrer */}
-                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '10px 14px', marginBottom: 8 }}>
-                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 3 }}>Referrer</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: lead.referrer ? C.blue : C.slateLight, wordBreak: 'break-all' }}>{lead.referrer ? <a href={lead.referrer} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.referrer}</a> : 'Direct / No referrer'}</div>
-                </div>
-                {/* Row 3: Lead ID + Created */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
-                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Lead ID</div>
-                    <div style={{ fontSize: 11, fontWeight: 500, color: C.slateDark, fontFamily: 'monospace' }}>{lead.lead_id}</div>
+                {/* Row 2: Page Title + Referrer */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6 }}>
+                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 12px' }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: C.dark }}>{lead.page_title || '—'}</div>
                   </div>
-                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
-                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Created</div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{fmtDate(lead.created_at)}</div>
+                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 12px' }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div>
                   </div>
                 </div>
+                {/* Row 3: Enquiry date */}
+                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 12px' }}>
+                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Enquiry Date & Time</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{fmtDate(lead.created_at)}</div>
+                </div>
+                <div style={{ fontSize: 10, color: C.slateLight, marginTop: 6, fontFamily: 'monospace' }}>ID: {lead.lead_id}</div>
               </div>
 
               {/* CARD: Enquirer */}
@@ -856,19 +863,19 @@ function CRMApp({ user, onLogout }) {
                 </div>
                 <div style={{ padding: '4px 20px 12px' }}>
                   {/* Row 1: Name */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '0 8px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
                     <EditableField label="First Name" value={lead.first_name} field="first_name" onSave={saveField} />
                     <EditableField label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} />
                   </div>
                   {/* Row 2: Contact */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr', gap: '0 8px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Email" value={lead.email} field="email" onSave={saveField} type="email" />
                     <EditableField label="ISD" value={lead.isd} field="isd" onSave={saveField} />
                     <EditableField label="Phone" value={lead.phone} field="phone" onSave={saveField} />
                   </div>
                   {/* Row 3: Location & Contact preference */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 8px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} />
                     <EditableField label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} />
                     <EditableField label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} />
@@ -885,12 +892,12 @@ function CRMApp({ user, onLogout }) {
                   </div>
                 </div>
                 <div style={{ padding: '4px 20px 12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 8px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} />
                     <EditableField label="Patient First Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} />
                     <EditableField label="Patient Last Name" value={lead.patient_last_name} field="patient_last_name" onSave={saveField} />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '0 8px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} />
                     <EditableField label="Patient Email" value={lead.patient_email} field="patient_email" onSave={saveField} type="email" />
                     <EditableField label="Patient Phone" value={lead.patient_phone} field="patient_phone" onSave={saveField} />
@@ -933,7 +940,7 @@ function CRMApp({ user, onLogout }) {
                     <div style={{ fontSize: 9, color: '#92400e', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Patient Message</div>
                     <div style={{ fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.6 }}>{lead.message}</div>
                   </div>}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.blue}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 8px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.blue}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} />
                     <EditableField label="Treatment Sought" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} />
                     <EditableField label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} />
@@ -952,7 +959,7 @@ function CRMApp({ user, onLogout }) {
                   </div>
                 </div>
                 <div style={{ padding: '4px 20px 12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.green}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 8px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.green}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <EditableField label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" />
                     <EditableField label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" />
                     <EditableField label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP','SAR','QAR','KWD','BHD','OMR']} />
@@ -1476,7 +1483,7 @@ const Loader = () => <div style={{ padding: 40, textAlign: 'center', color: C.sl
 const SectionLabel = ({ children, style: s }) => <div style={{ fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, fontFamily: FONT, ...s }}>{children}</div>;
 
 const inputStyle = { width: '100%', padding: '11px 13px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: FONT, color: C.dark, transition: 'border-color 0.15s' };
-const inputSmall = { padding: '6px 8px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 12, outline: 'none', fontFamily: FONT, color: C.dark, boxSizing: 'border-box' };
+const inputSmall = { padding: '8px 10px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, outline: 'none', fontFamily: FONT, color: C.dark, boxSizing: 'border-box', width: '100%' };
 const labelStyle = { display: 'block', fontSize: 10, fontWeight: 700, color: C.slateDark, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT };
 const lblSm = { display: 'block', fontSize: 9, fontWeight: 600, color: C.slate, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT };
 const selStyle = { padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 11, color: C.slateDark, background: C.white, cursor: 'pointer', outline: 'none', fontFamily: FONT };

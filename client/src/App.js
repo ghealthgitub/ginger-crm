@@ -350,23 +350,37 @@ function CRMApp({ user, onLogout }) {
           {!collapsed && <div><div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.2 }}>Ginger CRM</div></div>}
         </div>
 
+        {/* Dashboard - always first */}
+        <div style={{ padding: '8px 10px 2px' }}>
+          <button onClick={() => setView('dashboard')}
+            style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '9px 10px', borderRadius: 6, border: 'none', background: view === 'dashboard' ? `${C.teal}18` : 'transparent', color: view === 'dashboard' ? C.tealLight : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', transition: 'all 0.15s', fontFamily: FONT }}>
+            <span style={{ fontSize: 14, flexShrink: 0 }}>◻</span>
+            {!collapsed && <span>Dashboard</span>}
+          </button>
+        </div>
+
+        {/* Inbox categories */}
         {!collapsed && (
-          <div style={{ padding: '10px 10px 4px' }}>
+          <div style={{ padding: '6px 10px 4px' }}>
             <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, paddingLeft: 6 }}>Inbox</div>
-            {CATEGORIES.map(cat => (
-              <button key={cat.key} onClick={() => { setActiveCategory(cat.key); if (view === 'detail') setView('leads'); }}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 8px', borderRadius: 6, border: 'none', background: activeCategory === cat.key ? 'rgba(14,165,160,0.12)' : 'transparent', color: activeCategory === cat.key ? C.tealLight : 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12, fontWeight: activeCategory === cat.key ? 600 : 400, textAlign: 'left', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
+            {CATEGORIES.map(cat => {
+              const isActive = activeCategory === cat.key && (view === 'leads' || view === 'detail');
+              return (
+              <button key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 8px', borderRadius: 6, border: 'none', background: isActive ? 'rgba(14,165,160,0.12)' : 'transparent', color: isActive ? C.tealLight : 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400, textAlign: 'left', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
                 <span style={{ fontSize: 13 }}>{cat.icon}</span><span>{cat.label}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        <div style={{ padding: '6px 10px', flex: 1 }}>
-          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, paddingLeft: 6 }}>Navigate</div>}
-          {nav.map(item => (
+        {/* Other navigation */}
+        <div style={{ padding: '4px 10px', flex: 1 }}>
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, paddingLeft: 6 }}>Tools</div>}
+          {nav.filter(n => n.key !== 'dashboard').map(item => (
             <button key={item.key} onClick={() => setView(item.key)}
-              style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '7px 8px', borderRadius: 6, border: 'none', background: (view === item.key || (view === 'detail' && item.key === 'leads')) ? `${C.teal}18` : 'transparent', color: (view === item.key || (view === 'detail' && item.key === 'leads')) ? C.tealLight : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
+              style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '7px 8px', borderRadius: 6, border: 'none', background: view === item.key ? `${C.teal}18` : 'transparent', color: view === item.key ? C.tealLight : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
               <span style={{ fontSize: 13, flexShrink: 0, opacity: 0.8 }}>{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </button>
@@ -401,38 +415,42 @@ function CRMApp({ user, onLogout }) {
     </div>
   );
 
-  // ---- DASHBOARD ----
+  // ---- DASHBOARD (role-based) ----
   const Dashboard = () => {
     if (!stats) return <Loader />;
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
     return (
       <div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, borderRadius: 12, padding: '20px 24px', marginBottom: 18, color: C.white }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: FONT }}>{greeting}, {user.name}!</div>
+          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{ROLE_LABELS[user.role]} \u00b7 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12, marginBottom: 18 }}>
           {[
-            { label: 'Total Patients', value: stats.total, color: C.teal },
+            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal },
             { label: 'New Today', value: stats.today, color: C.green },
             { label: 'Urgent', value: stats.urgent, color: C.red },
-            { label: 'Follow-Ups', value: stats.followUpDue, color: C.orange },
+            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange },
             { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple },
           ].map((s, i) => (
-            <div key={i} style={{ background: C.white, borderRadius: 10, padding: '16px 18px', border: `1px solid ${C.borderLight}`, position: 'relative', overflow: 'hidden' }}>
+            <div key={i} style={{ background: C.white, borderRadius: 10, padding: '14px 16px', border: `1px solid ${C.borderLight}`, position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: s.color }} />
-              <div style={{ fontSize: 10, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4, fontFamily: FONT }}>{s.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
+              <div style={{ fontSize: 9.5, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3, fontFamily: FONT }}>{s.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
             </div>
           ))}
         </div>
 
         {isAdminOrManager && stats.byCategory && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
             {CATEGORIES.map(cat => (
-              <div key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }} style={{ background: C.white, borderRadius: 10, padding: '14px 16px', border: `1px solid ${activeCategory === cat.key ? cat.color + '40' : C.borderLight}`, cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }} style={{ background: C.white, borderRadius: 10, padding: '12px 14px', border: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 16 }}>{cat.icon}</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: C.dark, marginTop: 3, fontFamily: FONT }}>{cat.label}</div>
-                    <div style={{ fontSize: 10, color: C.slateLight }}>{cat.desc}</div>
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: cat.color, fontFamily: FONT }}>{stats.byCategory[cat.key] || 0}</div>
+                  <div><div style={{ fontSize: 15 }}>{cat.icon}</div><div style={{ fontSize: 11, fontWeight: 600, color: C.dark, marginTop: 2, fontFamily: FONT }}>{cat.label}</div><div style={{ fontSize: 9, color: C.slateLight }}>{cat.desc}</div></div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: cat.color, fontFamily: FONT }}>{stats.byCategory[cat.key] || 0}</div>
                 </div>
               </div>
             ))}
@@ -440,11 +458,11 @@ function CRMApp({ user, onLogout }) {
         )}
 
         {followUps.length > 0 && (
-          <div style={{ background: `linear-gradient(135deg, ${C.amberBg}, #fef3c7)`, border: `1px solid #fbbf24`, borderRadius: 10, padding: 16, marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 8, fontFamily: FONT }}>⏰ Follow-Ups Due ({followUps.length})</div>
-            {followUps.slice(0, 4).map(l => (
-              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #fde68a', cursor: 'pointer' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 11, color: C.slate, fontWeight: 400 }}>· {l.nationality}</span></span>
+          <div style={{ background: `linear-gradient(135deg, ${C.amberBg}, #fef3c7)`, border: `1px solid #fbbf24`, borderRadius: 10, padding: 14, marginBottom: 18 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, fontFamily: FONT }}>\u23f0 Follow-Ups Due ({followUps.length})</div>
+            {followUps.slice(0, 5).map(l => (
+              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid #fde68a', cursor: 'pointer' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 10, color: C.slate, fontWeight: 400 }}>\u00b7 {l.nationality}</span></span>
                 <span style={{ fontSize: 10, color: '#92400e' }}>{l.follow_up_note?.substring(0, 30) || 'Follow up'}</span>
               </div>
             ))}
@@ -452,57 +470,67 @@ function CRMApp({ user, onLogout }) {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
-          <div style={{ background: C.white, borderRadius: 10, padding: 18, border: `1px solid ${C.borderLight}` }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 12, fontFamily: FONT }}>Pipeline</div>
+          <div style={{ background: C.white, borderRadius: 10, padding: 16, border: `1px solid ${C.borderLight}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>{isAdminOrManager ? 'Pipeline Overview' : 'My Pipeline'}</div>
             {STATUSES.map(s => {
               const count = stats.byStatus[s.key] || 0;
               const pct = stats.total > 0 ? (count / stats.total * 100) : 0;
               return (
-                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 10, width: 75, textAlign: 'right', color: C.slate, fontFamily: FONT }}>{s.label}</span>
-                  <div style={{ flex: 1, height: 18, background: C.offWhite, borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 4, minWidth: count > 0 ? 18 : 0, transition: 'width 0.4s' }} />
+                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                  <span style={{ fontSize: 10, width: 70, textAlign: 'right', color: C.slate, fontFamily: FONT }}>{s.label}</span>
+                  <div style={{ flex: 1, height: 16, background: C.offWhite, borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 4, minWidth: count > 0 ? 16 : 0, transition: 'width 0.4s' }} />
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, width: 24, color: s.color, fontFamily: FONT }}>{count}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, width: 22, color: s.color, fontFamily: FONT }}>{count}</span>
                 </div>
               );
             })}
           </div>
-
-          <div style={{ background: C.white, borderRadius: 10, padding: 18, border: `1px solid ${C.borderLight}` }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 12, fontFamily: FONT }}>Recent Leads</div>
+          <div style={{ background: C.white, borderRadius: 10, padding: 16, border: `1px solid ${C.borderLight}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>{isAdminOrManager ? 'Recent Leads' : 'My Recent Leads'}</div>
             {leads.filter(l => l.lead_category === 'patient' || !l.lead_category).slice(0, 6).map(l => (
-              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
-                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.nationality} · {l.treatment_sought || l.service_type}</div></div>
-                <div style={{ textAlign: 'right' }}><StatusBadge status={l.status} small /><div style={{ fontSize: 9, color: C.slateLight, marginTop: 2 }}>{timeAgo(l.created_at)}</div></div>
+              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
+                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.nationality} \u00b7 {l.treatment_sought || l.service_type || '\u2014'}</div></div>
+                <div style={{ textAlign: 'right' }}><StatusBadge status={l.status} small /><div style={{ fontSize: 9, color: C.slateLight, marginTop: 1 }}>{timeAgo(l.created_at)}</div></div>
               </div>
             ))}
+            {leads.length === 0 && <div style={{ fontSize: 11, color: C.slateLight, textAlign: 'center', padding: 20 }}>No leads yet</div>}
           </div>
         </div>
 
         {isAdminOrManager && performance.length > 0 && (
-          <div style={{ background: C.white, borderRadius: 10, padding: 18, border: `1px solid ${C.borderLight}` }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 14, fontFamily: FONT }}>Team Performance (30 Days)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(performance.length, 4)}, 1fr)`, gap: 12 }}>
+          <div style={{ background: C.white, borderRadius: 10, padding: 16, border: `1px solid ${C.borderLight}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 12, fontFamily: FONT }}>Team Performance (30 Days)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(performance.length, 4)}, 1fr)`, gap: 10 }}>
               {performance.map((p, i) => {
                 const colors = [C.teal, C.blue, C.green, C.purple];
                 const rate = p.total > 0 ? Math.round((parseInt(p.converted) / parseInt(p.total)) * 100) : 0;
                 const c = colors[i % colors.length];
                 return (
-                  <div key={p.assigned_counselor} style={{ padding: 14, background: `${c}06`, borderRadius: 8, border: `1px solid ${c}12` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: 8, background: `${c}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: c }}>{p.assigned_counselor?.charAt(0)}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, fontFamily: FONT }}>{p.assigned_counselor}</div>
+                  <div key={p.assigned_counselor} style={{ padding: 12, background: `${c}05`, borderRadius: 8, border: `1px solid ${c}10` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 7, background: `${c}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: c }}>{p.assigned_counselor?.charAt(0)}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{p.assigned_counselor}</div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <div><div style={{ fontSize: 20, fontWeight: 800, color: C.dark }}>{p.total}</div><div style={{ fontSize: 9, color: C.slateLight }}>Total</div></div>
-                      <div><div style={{ fontSize: 20, fontWeight: 800, color: C.green }}>{p.converted}</div><div style={{ fontSize: 9, color: C.slateLight }}>Converted</div></div>
-                      <div><div style={{ fontSize: 20, fontWeight: 800, color: c }}>{rate}%</div><div style={{ fontSize: 9, color: C.slateLight }}>Conv Rate</div></div>
-                      <div><div style={{ fontSize: 20, fontWeight: 800, color: C.amber }}>{p.overdue_followups || 0}</div><div style={{ fontSize: 9, color: C.slateLight }}>Overdue</div></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <div><div style={{ fontSize: 18, fontWeight: 800, color: C.dark }}>{p.total}</div><div style={{ fontSize: 8, color: C.slateLight }}>Total</div></div>
+                      <div><div style={{ fontSize: 18, fontWeight: 800, color: C.green }}>{p.converted}</div><div style={{ fontSize: 8, color: C.slateLight }}>Converted</div></div>
+                      <div><div style={{ fontSize: 18, fontWeight: 800, color: c }}>{rate}%</div><div style={{ fontSize: 8, color: C.slateLight }}>Conv Rate</div></div>
+                      <div><div style={{ fontSize: 18, fontWeight: 800, color: C.amber }}>{p.overdue_followups || 0}</div><div style={{ fontSize: 8, color: C.slateLight }}>Overdue</div></div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {!isAdminOrManager && (
+          <div style={{ background: C.white, borderRadius: 10, padding: 16, border: `1px solid ${C.borderLight}`, marginTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>Quick Actions</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => setView('leads')} style={{ ...btnSmallTeal, padding: '10px 18px', fontSize: 12 }}>View My Leads</button>
+              <button onClick={() => setView('pipeline')} style={{ ...btnSmallGhost, padding: '10px 18px', fontSize: 12 }}>Pipeline View</button>
             </div>
           </div>
         )}
@@ -941,6 +969,29 @@ function CRMApp({ user, onLogout }) {
       setTimeout(() => setMsg(''), 3000);
     };
 
+    const saveAllSchedules = async () => {
+      setSaving('all');
+      let saved = 0;
+      try {
+        for (const u of users) {
+          const entries = [];
+          for (let d = 0; d < 7; d++) {
+            const val = grid[u.id]?.[d];
+            if (val) {
+              const [start, end] = val.split('-');
+              entries.push({ day_of_week: d, slot_start: start, slot_end: end });
+            }
+          }
+          await schedulesApi.bulkSet(u.id, entries);
+          saved++;
+        }
+        setMsg(`✓ All schedules saved (${saved} users)`);
+        fetchSchedules();
+      } catch (e) { setMsg('Error: ' + e.message); }
+      setSaving(null);
+      setTimeout(() => setMsg(''), 4000);
+    };
+
     const handleOverride = async () => {
       if (!newOverride.user_id || !newOverride.override_date) { setMsg('Select counselor and date'); return; }
       try {
@@ -973,8 +1024,11 @@ function CRMApp({ user, onLogout }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div>
             <h2 style={{ fontSize: 15, fontWeight: 700, color: C.dark, margin: 0 }}>Counselor Scheduling</h2>
-            <p style={{ fontSize: 11, color: C.slateLight, margin: 0 }}>Select shifts directly in the grid. Click Save to apply changes.</p>
+            <p style={{ fontSize: 11, color: C.slateLight, margin: 0 }}>Select shifts directly in the grid. Save per row or Save All at once.</p>
           </div>
+          <button onClick={saveAllSchedules} disabled={saving === 'all'} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: C.teal, color: C.white, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, opacity: saving === 'all' ? 0.5 : 1 }}>
+            {saving === 'all' ? 'Saving...' : '💾 Save All Schedules'}
+          </button>
         </div>
 
         {msg && <div style={{ background: msg.includes('error') || msg.includes('Select') ? C.redBg : C.greenBg, color: msg.includes('error') || msg.includes('Select') ? C.red : C.green, padding: '7px 12px', borderRadius: 8, fontSize: 12, marginBottom: 10, transition: 'all 0.3s' }}>{msg}</div>}

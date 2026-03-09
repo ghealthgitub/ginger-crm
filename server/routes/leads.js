@@ -22,6 +22,83 @@ function categorizeFromServiceType(serviceType) {
 }
 
 // ============================================================
+// PUBLIC: Get current on-duty counselor (for chat widget)
+// ============================================================
+router.get('/on-duty', async (req, res) => {
+  try {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const ist = new Date(now.getTime() + istOffset);
+    const currentDay = ist.getUTCDay();
+    const currentTime = `${String(ist.getUTCHours()).padStart(2,'0')}:${String(ist.getUTCMinutes()).padStart(2,'0')}`;
+
+    // Check overrides
+    const overrideRes = await pool.query(
+      `SELECT user_id FROM schedule_overrides WHERE override_date = CURRENT_DATE AND is_off = true`
+    );
+    const offUserIds = overrideRes.rows.map(r => r.user_id);
+
+    // Find on-duty from schedules table
+    const schedRes = await pool.query(`
+      SELECT cs.user_id, cs.slot_start, cs.slot_end, u.display_name, u.role, u.whatsapp, u.telegram, u.email
+      FROM counselor_schedules cs
+      JOIN users u ON cs.user_id = u.id
+      WHERE cs.day_of_week = $1 AND cs.is_active = true AND u.is_active = true
+      ${offUserIds.length > 0 ? `AND cs.user_id NOT IN (${offUserIds.join(',')})` : ''}
+    `, [currentDay]);
+
+    let onDuty = [];
+    for (const s of schedRes.rows) {
+      const start = s.slot_start?.substring(0, 5);
+      const end = s.slot_end?.substring(0, 5);
+      if (!start || !end) continue;
+      let isOnShift = false;
+      if (start < end) {
+        isOnShift = currentTime >= start && currentTime < end;
+      } else {
+        isOnShift = currentTime >= start || currentTime < end;
+      }
+      if (isOnShift) {
+        onDuty.push({
+          name: s.display_name,
+          role: s.role,
+          whatsapp: s.whatsapp,
+          telegram: s.telegram,
+          email: s.email,
+          shift: `${start} - ${end}`
+        });
+      }
+    }
+
+    // Fallback: check users table shift fields
+    if (onDuty.length === 0) {
+      const fallbackRes = await pool.query(
+        `SELECT display_name, role, whatsapp, telegram, email, shift_start, shift_end FROM users WHERE is_active = true AND shift_start IS NOT NULL AND shift_end IS NOT NULL`
+      );
+      for (const c of fallbackRes.rows) {
+        const start = c.shift_start?.substring(0, 5);
+        const end = c.shift_end?.substring(0, 5);
+        if (!start || !end) continue;
+        let isOn = start < end ? (currentTime >= start && currentTime < end) : (currentTime >= start || currentTime < end);
+        if (isOn) {
+          onDuty.push({ name: c.display_name, role: c.role, whatsapp: c.whatsapp, telegram: c.telegram, email: c.email, shift: `${start} - ${end}` });
+        }
+      }
+    }
+
+    res.json({
+      currentTime: currentTime + ' IST',
+      day: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][currentDay],
+      onDuty,
+      hasStaff: onDuty.length > 0
+    });
+  } catch (e) {
+    console.error('On-duty error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============================================================
 // PUBLIC: Webhook endpoint for chat widget
 // ============================================================
 router.post('/webhook', async (req, res) => {
@@ -92,32 +169,63 @@ router.post('/webhook', async (req, res) => {
       return res.json({ success: true, leadId: existing.lead_id, counselor: existing.assigned_counselor, updated: true });
     }
 
-    // New lead — assign counselor via round-robin (only for patient leads)
+    // New lead — assign to on-duty staff via schedules (only for patient leads)
     let counselor = d.assignedCounselor;
     if (!counselor && category === 'patient') {
-      // Time-based assignment using shift slots
       const now = new Date();
-      const currentTime = `${String(now.getUTCHours() + 5).padStart(2,'0')}:${String(now.getUTCMinutes() + 30).padStart(2,'0')}`; // IST
-      
-      const shiftRes = await pool.query(
-        `SELECT display_name, shift_start, shift_end FROM users WHERE role = 'counselor' AND is_active = true`
+      // Calculate IST
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const ist = new Date(now.getTime() + istOffset);
+      const currentDay = ist.getUTCDay(); // 0=Sun, 6=Sat
+      const currentTime = `${String(ist.getUTCHours()).padStart(2,'0')}:${String(ist.getUTCMinutes()).padStart(2,'0')}`;
+
+      // Check for schedule overrides first (day offs)
+      const overrideRes = await pool.query(
+        `SELECT user_id FROM schedule_overrides WHERE override_date = CURRENT_DATE AND is_off = true`
       );
-      
-      // Find counselor on shift
+      const offUserIds = overrideRes.rows.map(r => r.user_id);
+
+      // Find staff with active schedules for current day/time
+      const schedRes = await pool.query(`
+        SELECT cs.user_id, cs.slot_start, cs.slot_end, u.display_name
+        FROM counselor_schedules cs
+        JOIN users u ON cs.user_id = u.id
+        WHERE cs.day_of_week = $1 AND cs.is_active = true AND u.is_active = true
+        ${offUserIds.length > 0 ? `AND cs.user_id NOT IN (${offUserIds.join(',')})` : ''}
+      `, [currentDay]);
+
       let onShift = [];
-      for (const c of shiftRes.rows) {
-        const start = c.shift_start;
-        const end = c.shift_end;
+      for (const s of schedRes.rows) {
+        const start = s.slot_start?.substring(0, 5);
+        const end = s.slot_end?.substring(0, 5);
+        if (!start || !end) continue;
         if (start < end) {
-          if (currentTime >= start && currentTime < end) onShift.push(c.display_name);
+          if (currentTime >= start && currentTime < end) onShift.push(s.display_name);
         } else {
           // Overnight shift
-          if (currentTime >= start || currentTime < end) onShift.push(c.display_name);
+          if (currentTime >= start || currentTime < end) onShift.push(s.display_name);
+        }
+      }
+
+      // Also check users with shift_start/shift_end set directly (fallback)
+      if (onShift.length === 0) {
+        const fallbackRes = await pool.query(
+          `SELECT display_name, shift_start, shift_end FROM users WHERE is_active = true AND shift_start IS NOT NULL AND shift_end IS NOT NULL`
+        );
+        for (const c of fallbackRes.rows) {
+          const start = c.shift_start?.substring(0, 5);
+          const end = c.shift_end?.substring(0, 5);
+          if (!start || !end) continue;
+          if (start < end) {
+            if (currentTime >= start && currentTime < end) onShift.push(c.display_name);
+          } else {
+            if (currentTime >= start || currentTime < end) onShift.push(c.display_name);
+          }
         }
       }
 
       if (onShift.length > 0) {
-        // Round-robin among on-shift counselors
+        // Round-robin among on-shift staff
         const countRes = await pool.query(`
           SELECT assigned_counselor, COUNT(*) as cnt 
           FROM leads WHERE created_at > NOW() - INTERVAL '24 hours' AND assigned_counselor = ANY($1)
@@ -128,17 +236,24 @@ router.post('/webhook', async (req, res) => {
         countRes.rows.forEach(r => { if (counts[r.assigned_counselor] !== undefined) counts[r.assigned_counselor] = parseInt(r.cnt); });
         counselor = Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
       } else {
-        // Fallback: round-robin among all active counselors
-        const countRes = await pool.query(`
-          SELECT assigned_counselor, COUNT(*) as cnt 
-          FROM leads WHERE created_at > NOW() - INTERVAL '30 days' 
-          GROUP BY assigned_counselor
-        `);
-        const names = shiftRes.rows.map(r => r.display_name);
-        const counts = {};
-        names.forEach(c => counts[c] = 0);
-        countRes.rows.forEach(r => { if (counts[r.assigned_counselor] !== undefined) counts[r.assigned_counselor] = parseInt(r.cnt); });
-        counselor = Object.entries(counts).sort((a, b) => a[1] - b[1])[0]?.[0] || 'Admin';
+        // No one on shift — round-robin among all active users with schedules
+        const allStaff = await pool.query(
+          `SELECT DISTINCT u.display_name FROM users u WHERE u.is_active = true AND (u.shift_start IS NOT NULL OR EXISTS (SELECT 1 FROM counselor_schedules cs WHERE cs.user_id = u.id AND cs.is_active = true))`
+        );
+        const names = allStaff.rows.map(r => r.display_name);
+        if (names.length > 0) {
+          const countRes = await pool.query(`
+            SELECT assigned_counselor, COUNT(*) as cnt 
+            FROM leads WHERE created_at > NOW() - INTERVAL '30 days' 
+            GROUP BY assigned_counselor
+          `);
+          const counts = {};
+          names.forEach(c => counts[c] = 0);
+          countRes.rows.forEach(r => { if (counts[r.assigned_counselor] !== undefined) counts[r.assigned_counselor] = parseInt(r.cnt); });
+          counselor = Object.entries(counts).sort((a, b) => a[1] - b[1])[0]?.[0] || 'Admin';
+        } else {
+          counselor = 'Admin';
+        }
       }
     } else if (!counselor) {
       counselor = 'Admin';

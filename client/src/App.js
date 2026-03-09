@@ -879,51 +879,60 @@ function CRMApp({ user, onLogout }) {
     const [schedules, setSchedules] = useState([]);
     const [overrides, setOverrides] = useState([]);
     const [loadingSched, setLoadingSched] = useState(true);
-    const [editingUser, setEditingUser] = useState(null);
-    const [weekSlots, setWeekSlots] = useState({});
+    const [saving, setSaving] = useState(null); // userId being saved
     const [newOverride, setNewOverride] = useState({ user_id: '', override_date: '', is_off: true, reason: '' });
     const [msg, setMsg] = useState('');
+
+    // Local editable state: { [userId]: { [day]: 'HH:MM-HH:MM' or '' } }
+    const [grid, setGrid] = useState({});
 
     const fetchSchedules = async () => {
       try {
         const [usersData, schedData, overData] = await Promise.all([
           usersApi.list(), schedulesApi.list(), schedulesApi.overrides()
         ]);
-        setUsers(usersData.filter(u => u.is_active));
+        const activeUsers = usersData.filter(u => u.is_active);
+        setUsers(activeUsers);
         setSchedules(schedData);
         setOverrides(overData);
+
+        // Build grid from schedule data
+        const g = {};
+        activeUsers.forEach(u => {
+          g[u.id] = {};
+          for (let d = 0; d < 7; d++) {
+            const slot = schedData.find(s => s.user_id === u.id && s.day_of_week === d);
+            g[u.id][d] = slot ? `${slot.slot_start?.substring(0,5)}-${slot.slot_end?.substring(0,5)}` : '';
+          }
+        });
+        setGrid(g);
       } catch (e) { console.error(e); }
       setLoadingSched(false);
     };
 
     useEffect(() => { fetchSchedules(); }, []);
 
-    const startEdit = (u) => {
-      setEditingUser(u);
-      const userScheds = schedules.filter(s => s.user_id === u.id);
-      const slots = {};
-      for (let d = 0; d < 7; d++) {
-        const ds = userScheds.find(s => s.day_of_week === d);
-        slots[d] = ds ? { start: ds.slot_start?.substring(0,5), end: ds.slot_end?.substring(0,5), active: true } : { start: '', end: '', active: false };
-      }
-      setWeekSlots(slots);
-      setMsg('');
+    const handleSlotChange = (userId, day, value) => {
+      setGrid(prev => ({ ...prev, [userId]: { ...prev[userId], [day]: value } }));
     };
 
-    const saveSchedule = async () => {
-      if (!editingUser) return;
+    const saveUserSchedule = async (u) => {
+      setSaving(u.id);
       const entries = [];
       for (let d = 0; d < 7; d++) {
-        if (weekSlots[d]?.active && weekSlots[d]?.start && weekSlots[d]?.end) {
-          entries.push({ day_of_week: d, slot_start: weekSlots[d].start, slot_end: weekSlots[d].end });
+        const val = grid[u.id]?.[d];
+        if (val) {
+          const [start, end] = val.split('-');
+          entries.push({ day_of_week: d, slot_start: start, slot_end: end });
         }
       }
       try {
-        await schedulesApi.bulkSet(editingUser.id, entries);
-        setMsg(entries.length > 0 ? `Schedule saved for ${editingUser.display_name} (${entries.length} days)` : `Schedule cleared for ${editingUser.display_name} — no slots assigned`);
-        setEditingUser(null);
+        await schedulesApi.bulkSet(u.id, entries);
+        setMsg(`✓ ${u.display_name}: ${entries.length > 0 ? entries.length + ' days saved' : 'all slots cleared'}`);
         fetchSchedules();
       } catch (e) { setMsg(e.message); }
+      setSaving(null);
+      setTimeout(() => setMsg(''), 3000);
     };
 
     const handleOverride = async () => {
@@ -938,98 +947,95 @@ function CRMApp({ user, onLogout }) {
 
     if (loadingSched) return <Loader />;
 
-    const getUserScheduleDisplay = (u) => {
-      const userScheds = schedules.filter(s => s.user_id === u.id);
-      if (userScheds.length === 0) return { text: 'No slots assigned', color: C.slateLight };
-      const days = userScheds.map(s => `${DAY_SHORT[s.day_of_week]} ${s.slot_start?.substring(0,5)}–${s.slot_end?.substring(0,5)}`).join(' · ');
-      return { text: days, color: C.slateDark };
+    const SLOT_OPTIONS = [
+      { value: '', label: '— Off —', color: C.slateLight },
+      { value: '02:00-14:00', label: '02–14', color: '#2563eb' },
+      { value: '14:00-20:00', label: '14–20', color: '#d97706' },
+      { value: '20:00-02:00', label: '20–02', color: '#7c3aed' },
+    ];
+
+    const getSlotStyle = (val) => {
+      if (!val) return { background: C.cream, color: C.slateLight, borderColor: C.border };
+      if (val === '02:00-14:00') return { background: '#eff6ff', color: '#2563eb', borderColor: '#93c5fd' };
+      if (val === '14:00-20:00') return { background: '#fffbeb', color: '#d97706', borderColor: '#fcd34d' };
+      if (val === '20:00-02:00') return { background: '#f5f3ff', color: '#7c3aed', borderColor: '#c4b5fd' };
+      return { background: C.cream, color: C.slate, borderColor: C.border };
     };
 
     return (
       <div style={{ fontFamily: FONT }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div><h2 style={{ fontSize: 15, fontWeight: 700, color: C.dark, margin: 0 }}>Counselor Scheduling</h2><p style={{ fontSize: 11, color: C.slateLight, margin: 0 }}>Set weekly shift slots per counselor. Leave unset for no assignment.</p></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: C.dark, margin: 0 }}>Counselor Scheduling</h2>
+            <p style={{ fontSize: 11, color: C.slateLight, margin: 0 }}>Select shifts directly in the grid. Click Save to apply changes.</p>
+          </div>
         </div>
 
-        {msg && <div style={{ background: msg.includes('error') || msg.includes('Select') ? C.redBg : C.greenBg, color: msg.includes('error') || msg.includes('Select') ? C.red : C.green, padding: '8px 12px', borderRadius: 8, fontSize: 12, marginBottom: 12 }}>{msg}</div>}
+        {msg && <div style={{ background: msg.includes('error') || msg.includes('Select') ? C.redBg : C.greenBg, color: msg.includes('error') || msg.includes('Select') ? C.red : C.green, padding: '7px 12px', borderRadius: 8, fontSize: 12, marginBottom: 10, transition: 'all 0.3s' }}>{msg}</div>}
 
-        {/* Schedule Grid */}
-        <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden', marginBottom: 20 }}>
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>Weekly Schedules</span>
+        {/* Slot Legend */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, fontSize: 11 }}>
+          {SLOT_OPTIONS.filter(s => s.value).map(s => {
+            const st = getSlotStyle(s.value);
+            return <div key={s.value} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 12, height: 12, borderRadius: 3, background: st.background, border: `1.5px solid ${st.borderColor}` }} />
+              <span style={{ color: st.color, fontWeight: 600 }}>{s.value.replace('-', ' – ')}</span>
+            </div>;
+          })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: C.cream, border: `1.5px solid ${C.border}` }} />
+            <span style={{ color: C.slateLight }}>Off</span>
           </div>
+        </div>
+
+        {/* Inline Editable Grid */}
+        <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden', marginBottom: 20 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr style={{ background: C.cream }}>
-              <th style={thSched}>Counselor</th>
-              {DAY_SHORT.map(d => <th key={d} style={thSched}>{d}</th>)}
-              <th style={thSched}>Actions</th>
-            </tr></thead>
+            <thead>
+              <tr style={{ background: C.navy }}>
+                <th style={{ ...thSched, color: 'rgba(255,255,255,0.8)', background: C.navy, padding: '10px 12px', textAlign: 'left', minWidth: 140 }}>Counselor</th>
+                {DAY_SHORT.map(d => <th key={d} style={{ ...thSched, color: 'rgba(255,255,255,0.8)', background: C.navy, padding: '10px 6px' }}>{d}</th>)}
+                <th style={{ ...thSched, color: 'rgba(255,255,255,0.8)', background: C.navy, padding: '10px 8px', width: 70 }}></th>
+              </tr>
+            </thead>
             <tbody>
-              {users.map(u => {
-                const userScheds = schedules.filter(s => s.user_id === u.id);
-                return (
-                  <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 6, background: `${C.teal}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: C.teal }}>{u.display_name?.charAt(0)}</div>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{u.display_name}</div>
-                          <div style={{ fontSize: 9, color: C.slateLight }}>{u.email || '—'}</div>
-                        </div>
+              {users.map((u, idx) => (
+                <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: idx % 2 === 0 ? C.white : C.cream + '80' }}>
+                  <td style={{ padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 7, background: `${C.teal}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.teal, flexShrink: 0 }}>{u.display_name?.charAt(0)}</div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>{u.display_name}</div>
+                        <div style={{ fontSize: 9, color: C.slateLight }}>{u.role}</div>
                       </div>
-                    </td>
-                    {[0,1,2,3,4,5,6].map(d => {
-                      const slot = userScheds.find(s => s.day_of_week === d);
-                      return (
-                        <td key={d} style={{ padding: '6px 4px', textAlign: 'center', fontSize: 9 }}>
-                          {slot ? (
-                            <div style={{ background: `${C.teal}10`, borderRadius: 4, padding: '3px 4px', color: C.teal, fontWeight: 600, fontFamily: 'monospace' }}>
-                              {slot.slot_start?.substring(0,5)}<br/>{slot.slot_end?.substring(0,5)}
-                            </div>
-                          ) : (
-                            <span style={{ color: C.slateLight }}>—</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td style={{ padding: '6px 10px', textAlign: 'center' }}>
-                      <button onClick={() => startEdit(u)} style={{ ...btnSmallTeal, padding: '4px 10px', fontSize: 10 }}>Edit</button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  {[0,1,2,3,4,5,6].map(d => {
+                    const val = grid[u.id]?.[d] || '';
+                    const st = getSlotStyle(val);
+                    return (
+                      <td key={d} style={{ padding: '5px 3px', textAlign: 'center' }}>
+                        <select value={val} onChange={e => handleSlotChange(u.id, d, e.target.value)}
+                          style={{ width: '100%', padding: '6px 2px', borderRadius: 5, border: `1.5px solid ${st.borderColor}`, fontSize: 10, fontWeight: val ? 700 : 400, color: st.color, background: st.background, cursor: 'pointer', fontFamily: FONT, textAlign: 'center', outline: 'none', appearance: 'none', WebkitAppearance: 'none' }}>
+                          <option value="" style={{ color: C.slateLight }}>Off</option>
+                          <option value="02:00-14:00" style={{ color: '#2563eb' }}>02–14</option>
+                          <option value="14:00-20:00" style={{ color: '#d97706' }}>14–20</option>
+                          <option value="20:00-02:00" style={{ color: '#7c3aed' }}>20–02</option>
+                        </select>
+                      </td>
+                    );
+                  })}
+                  <td style={{ padding: '5px 6px', textAlign: 'center' }}>
+                    <button onClick={() => saveUserSchedule(u)} disabled={saving === u.id}
+                      style={{ ...btnSmallTeal, padding: '5px 12px', fontSize: 10, opacity: saving === u.id ? 0.5 : 1 }}>
+                      {saving === u.id ? '...' : 'Save'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-
-        {/* Edit Modal */}
-        {editingUser && (
-          <div style={{ background: C.white, borderRadius: 10, border: `2px solid ${C.teal}30`, padding: 20, marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 14 }}>Edit Schedule: {editingUser.display_name}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 16 }}>
-              {[0,1,2,3,4,5,6].map(d => (
-                <div key={d} style={{ padding: 10, background: weekSlots[d]?.active ? `${C.teal}06` : C.cream, borderRadius: 8, border: `1px solid ${weekSlots[d]?.active ? C.teal + '25' : C.border}`, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.dark, marginBottom: 6 }}>{DAY_NAMES[d]}</div>
-                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 10, color: C.slate, marginBottom: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={weekSlots[d]?.active || false} onChange={e => setWeekSlots({ ...weekSlots, [d]: { ...weekSlots[d], active: e.target.checked } })} />
-                    Active
-                  </label>
-                  {weekSlots[d]?.active && (
-                    <div>
-                      <input type="time" value={weekSlots[d]?.start || ''} onChange={e => setWeekSlots({ ...weekSlots, [d]: { ...weekSlots[d], start: e.target.value } })} style={{ width: '100%', padding: '4px', borderRadius: 4, border: `1px solid ${C.border}`, fontSize: 11, marginBottom: 4, boxSizing: 'border-box' }} />
-                      <input type="time" value={weekSlots[d]?.end || ''} onChange={e => setWeekSlots({ ...weekSlots, [d]: { ...weekSlots[d], end: e.target.value } })} style={{ width: '100%', padding: '4px', borderRadius: 4, border: `1px solid ${C.border}`, fontSize: 11, boxSizing: 'border-box' }} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={saveSchedule} style={{ ...btnSmallTeal, padding: '8px 20px' }}>Save Schedule</button>
-              <button onClick={() => setEditingUser(null)} style={btnSmallGhost}>Cancel</button>
-              <button onClick={() => { setWeekSlots(Object.fromEntries([0,1,2,3,4,5,6].map(d => [d, { start: '', end: '', active: false }]))); }} style={{ ...btnSmallGhost, color: C.red, borderColor: '#fecaca' }}>Clear All</button>
-            </div>
-          </div>
-        )}
 
         {/* Date Overrides */}
         <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, padding: 16 }}>

@@ -889,7 +889,7 @@ function CRMApp({ user, onLogout }) {
         const [usersData, schedData, overData] = await Promise.all([
           usersApi.list(), schedulesApi.list(), schedulesApi.overrides()
         ]);
-        setUsers(usersData.filter(u => u.role === 'counselor' && u.is_active));
+        setUsers(usersData.filter(u => u.is_active));
         setSchedules(schedData);
         setOverrides(overData);
       } catch (e) { console.error(e); }

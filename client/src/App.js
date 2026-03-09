@@ -817,103 +817,146 @@ function CRMApp({ user, onLogout }) {
 
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-              {/* Source & Tracking — TOP (critical for business) */}
-              <div style={{ background: `linear-gradient(135deg, ${C.blueBg}, ${C.cream})`, borderRadius: 12, border: `1px solid ${C.blue}15`, padding: '14px 18px', marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* CARD: Lead Source & Tracking */}
+              <div className="detail-card" style={{ background: `linear-gradient(135deg, ${C.blueBg}, ${C.cream})`, borderRadius: 12, border: `1px solid ${C.blue}15`, padding: '16px 20px', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.blue}12`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 14 }}>🔗</span> Lead Source & Tracking
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
-                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
-                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source Page</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: C.dark, wordBreak: 'break-all' }}>{lead.page_title || '—'}</div>
-                  </div>
-                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
-                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: lead.referrer ? C.blue : C.slateLight, wordBreak: 'break-all' }}>{lead.referrer ? <a href={lead.referrer} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.referrer.replace('https://','').replace('http://','').substring(0,35)}</a> : '—'}</div>
-                  </div>
-                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                {/* Row 1: Source Page */}
+                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '10px 14px', marginBottom: 8 }}>
+                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 3 }}>Source Page</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>{lead.page_url ? <a href={lead.page_url} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.page_title || lead.page_url}</a> : (lead.page_title || '—')}</div>
+                </div>
+                {/* Row 2: Referrer */}
+                <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '10px 14px', marginBottom: 8 }}>
+                  <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 3 }}>Referrer</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: lead.referrer ? C.blue : C.slateLight, wordBreak: 'break-all' }}>{lead.referrer ? <a href={lead.referrer} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.referrer}</a> : 'Direct / No referrer'}</div>
+                </div>
+                {/* Row 3: Lead ID + Created */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
                     <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Lead ID</div>
                     <div style={{ fontSize: 11, fontWeight: 500, color: C.slateDark, fontFamily: 'monospace' }}>{lead.lead_id}</div>
                   </div>
-                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                  <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
                     <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Created</div>
                     <div style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{fmtDate(lead.created_at)}</div>
                   </div>
                 </div>
               </div>
 
-              {/* Enquirer Card — name, phone, email grouped logically */}
-              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.orange, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 15 }}>👤</span> Enquirer
+              {/* CARD: Enquirer */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, overflow: 'hidden', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderLight}`, background: `${C.orange}04` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.orange, textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>👤</span> Enquirer
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
-                  <EditableField label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
-                  <EditableField label="First Name" value={lead.first_name} field="first_name" onSave={saveField} />
-                  <EditableField label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 1fr', gap: '4px 12px', marginBottom: 4 }}>
-                  <EditableField label="Email" value={lead.email} field="email" onSave={saveField} type="email" />
-                  <EditableField label="ISD Code" value={lead.isd} field="isd" onSave={saveField} />
-                  <EditableField label="Phone" value={lead.phone} field="phone" onSave={saveField} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px' }}>
-                  <EditableField label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} />
-                  <EditableField label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} />
-                  <EditableField label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} />
+                <div style={{ padding: '4px 20px 12px' }}>
+                  {/* Row 1: Name */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
+                    <EditableField label="First Name" value={lead.first_name} field="first_name" onSave={saveField} />
+                    <EditableField label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} />
+                  </div>
+                  {/* Row 2: Contact */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Email" value={lead.email} field="email" onSave={saveField} type="email" />
+                    <EditableField label="ISD" value={lead.isd} field="isd" onSave={saveField} />
+                    <EditableField label="Phone" value={lead.phone} field="phone" onSave={saveField} />
+                  </div>
+                  {/* Row 3: Location & Contact preference */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.orange}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} />
+                    <EditableField label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} />
+                    <EditableField label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} />
+                  </div>
                 </div>
               </div>
 
-              {/* Patient Details Card — only if not self */}
+              {/* CARD: Patient Details — only if not self */}
               {lead.patient_relation !== 'self' && (
-              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.purple}12`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.purple, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 15 }}>🏥</span> Patient Details
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.purple}15`, overflow: 'hidden', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.purple}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderLight}`, background: `${C.purple}04` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.purple, textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>🏥</span> Patient Details
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
-                  <EditableField label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} />
-                  <EditableField label="Patient First Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} />
-                  <EditableField label="Patient Last Name" value={lead.patient_last_name} field="patient_last_name" onSave={saveField} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '4px 12px' }}>
-                  <EditableField label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} />
-                  <EditableField label="Patient Email" value={lead.patient_email} field="patient_email" onSave={saveField} type="email" />
-                  <EditableField label="Patient Phone" value={lead.patient_phone} field="patient_phone" onSave={saveField} />
+                <div style={{ padding: '4px 20px 12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} />
+                    <EditableField label="Patient First Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} />
+                    <EditableField label="Patient Last Name" value={lead.patient_last_name} field="patient_last_name" onSave={saveField} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.purple}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} />
+                    <EditableField label="Patient Email" value={lead.patient_email} field="patient_email" onSave={saveField} type="email" />
+                    <EditableField label="Patient Phone" value={lead.patient_phone} field="patient_phone" onSave={saveField} />
+                  </div>
                 </div>
               </div>)}
 
-              {/* Inquiry Card — message prominent */}
-              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 15 }}>💬</span> Inquiry Details
+              {/* CARD: Medical (moved from separate tab to overview) */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.red}12`, overflow: 'hidden', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.red}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderLight}`, background: `${C.red}03` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>🩺</span> Medical Information
+                  </div>
                 </div>
-                {lead.message && <div style={{ background: `${C.amberBg}`, border: `1px solid #fde68a`, borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
-                  <div style={{ fontSize: 9, color: '#92400e', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Patient Message</div>
-                  <div style={{ fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.6 }}>{lead.message}</div>
-                </div>}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 8 }}>
-                  <EditableField label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} />
-                  <EditableField label="Treatment" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} />
-                  <EditableField label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} />
+                <div style={{ padding: '4px 20px 12px' }}>
+                  <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.red}02`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." />
+                  </div>
+                  <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.red}02`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} type="textarea" />
+                  </div>
+                  <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.red}02`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Referred Hospitals" value={lead.referred_hospitals} field="referred_hospitals" onSave={saveField} multiOptions={HOSPITAL_OPTIONS} />
+                  </div>
+                  <div style={{ padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.red}02`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Recommended Doctors" value={lead.recommended_doctors} field="recommended_doctors" onSave={saveField} multiOptions={DOCTOR_OPTIONS} />
+                  </div>
                 </div>
-                <EditableField label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add clinical notes, observations..." />
               </div>
 
-              {/* Travel & Billing Card */}
-              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.green}12`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 15 }}>✈️</span> Travel & Billing
+              {/* CARD: Inquiry Details */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.blue}12`, overflow: 'hidden', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.blue}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderLight}`, background: `${C.blue}04` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>💬</span> Inquiry Details
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
-                  <EditableField label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" />
-                  <EditableField label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" />
-                  <EditableField label="Billing Amount" value={lead.billing_amount} field="billing_amount" onSave={saveField} type="number" />
+                <div style={{ padding: '4px 20px 12px' }}>
+                  {lead.message && <div style={{ background: `${C.amberBg}`, border: `1px solid #fde68a`, borderRadius: 10, padding: '12px 16px', margin: '10px 0' }}>
+                    <div style={{ fontSize: 9, color: '#92400e', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Patient Message</div>
+                    <div style={{ fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.6 }}>{lead.message}</div>
+                  </div>}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', borderBottom: `1px solid ${C.borderLight}`, padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.blue}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} />
+                    <EditableField label="Treatment Sought" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} />
+                    <EditableField label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} />
+                  </div>
+                  <div style={{ padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.blue}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add clinical notes, observations..." />
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
-                  <EditableField label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP','SAR','QAR','KWD','BHD','OMR']} />
-                  <EditableField label="Billing Status" value={lead.billing_status} field="billing_status" onSave={saveField} options={['Pending','Estimate Sent','Deposit Received','Fully Paid','Refund Processed']} />
+              </div>
+
+              {/* CARD: Travel & Status */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.green}12`, overflow: 'hidden', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 16px ${C.green}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderLight}`, background: `${C.green}04` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>✈️</span> Travel & Status
+                  </div>
+                </div>
+                <div style={{ padding: '4px 20px 12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px', padding: '4px 0' }} onMouseEnter={e => e.currentTarget.style.background = `${C.green}03`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <EditableField label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" />
+                    <EditableField label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" />
+                    <EditableField label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP','SAR','QAR','KWD','BHD','OMR']} />
+                  </div>
                 </div>
               </div>
             </div>

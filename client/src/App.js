@@ -303,11 +303,23 @@ function CRMApp({ user, onLogout }) {
 
   useEffect(() => {
     fetchData();
-    // Don't auto-refresh on scheduling/settings pages — it resets local form state
     if (view === 'scheduling' || view === 'settings') return;
     const iv = setInterval(fetchData, 30000);
     return () => clearInterval(iv);
   }, [fetchData, view]);
+
+  // Browser back button handler — stay inside CRM
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      if (view === 'detail') { setView('leads'); }
+      else if (view !== 'dashboard') { setView('dashboard'); }
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [view]);
 
   const updateLead = async (leadId, updates) => {
     try {
@@ -365,8 +377,10 @@ function CRMApp({ user, onLogout }) {
       const active = isView ? view === key || (view === 'detail' && key === 'leads') : false;
       return (
         <button key={key} onClick={() => setView(key)}
-          style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '8px 10px', borderRadius: 8, border: 'none', background: active ? `${C.orange}15` : 'transparent', color: active ? C.orangeLight : 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12.5, fontWeight: active ? 600 : 400, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 2, transition: 'all 0.15s', fontFamily: FONT }}>
-          <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+          style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 10, width: '100%', padding: collapsed ? '9px 0' : '9px 12px', borderRadius: 8, border: 'none', background: active ? `${C.orange}18` : 'transparent', color: active ? '#fff' : 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, fontWeight: active ? 600 : 500, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 2, transition: 'all 0.15s', fontFamily: FONT }}
+          onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; e.currentTarget.style.background = active ? `${C.orange}18` : 'rgba(255,255,255,0.06)'; }}
+          onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = active ? `${C.orange}18` : 'transparent'; }}>
+          <span style={{ fontSize: 15, flexShrink: 0 }}>{icon}</span>
           {!collapsed && <span>{label}</span>}
         </button>
       );
@@ -376,8 +390,10 @@ function CRMApp({ user, onLogout }) {
       const isActive = activeCategory === cat.key && (view === 'leads' || view === 'detail');
       return (
         <button key={cat.key} onClick={() => { setActiveCategory(cat.key); setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setView('leads'); }}
-          style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 10px', borderRadius: 8, border: 'none', background: isActive ? `${cat.color}15` : 'transparent', color: isActive ? C.orangeLight : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400, textAlign: 'left', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
-          <span style={{ fontSize: 13 }}>{cat.icon}</span><span>{cat.label}</span>
+          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: isActive ? `${cat.color}18` : 'transparent', color: isActive ? '#fff' : 'rgba(255,255,255,0.65)', cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 500, textAlign: 'left', marginBottom: 2, transition: 'all 0.15s', fontFamily: FONT }}
+          onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; e.currentTarget.style.background = isActive ? `${cat.color}18` : 'rgba(255,255,255,0.06)'; }}
+          onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; e.currentTarget.style.background = isActive ? `${cat.color}18` : 'transparent'; }}>
+          <span style={{ fontSize: 14 }}>{cat.icon}</span><span>{cat.label}</span>
         </button>
       );
     };
@@ -394,17 +410,17 @@ function CRMApp({ user, onLogout }) {
           {sideBtn('dashboard', 'Dashboard', '◻', true)}
 
           {/* Primary: Leads & Pipeline */}
-          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Leads</div>}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '12px 0 5px', paddingLeft: 8, fontSize: 9.5 }}>Leads</div>}
           {catBtn(CATEGORIES[0])}
           {sideBtn('pipeline', 'Pipeline', '▥', true)}
 
           {/* Secondary: Other & Non-Targeted */}
-          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Other</div>}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '12px 0 5px', paddingLeft: 8, fontSize: 9.5 }}>Other</div>}
           {catBtn(CATEGORIES[1])}
           {catBtn(CATEGORIES[2])}
 
           {/* Tools */}
-          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Tools</div>}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '12px 0 5px', paddingLeft: 8, fontSize: 9.5 }}>Tools</div>}
           {isAdminOrManager && sideBtn('analytics', 'Analytics', '◈', true)}
           {isAdminOrManager && sideBtn('scheduling', 'Scheduling', '◷', true)}
           {isAdmin && sideBtn('settings', 'Settings', '⚙', true)}
@@ -421,14 +437,27 @@ function CRMApp({ user, onLogout }) {
     );
   };
 
-  const TopBar = () => (
-    <div style={{ background: C.white, padding: '0 22px', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, flexShrink: 0, fontFamily: FONT }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+  const TopBar = () => {
+    const crumbs = [{ label: 'Dashboard', view: 'dashboard' }];
+    if (view === 'leads' || view === 'detail') crumbs.push({ label: activeCategory === 'patient' ? 'Leads' : activeCategory === 'other' ? 'Other' : 'Non-Targeted', view: 'leads' });
+    if (view === 'detail' && selectedLead) crumbs.push({ label: `${selectedLead.first_name} ${selectedLead.last_name}`, view: 'detail' });
+    if (view === 'pipeline') crumbs.push({ label: 'Pipeline', view: 'pipeline' });
+    if (view === 'analytics') crumbs.push({ label: 'Analytics', view: 'analytics' });
+    if (view === 'scheduling') crumbs.push({ label: 'Scheduling', view: 'scheduling' });
+    if (view === 'settings') crumbs.push({ label: 'Settings', view: 'settings' });
+
+    return (
+    <div style={{ background: C.white, padding: '0 22px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, flexShrink: 0, fontFamily: FONT }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <button onClick={() => setCollapsed(!collapsed)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.slate, padding: '2px' }}>☰</button>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: C.dark, margin: 0, textTransform: 'capitalize' }}>
-          {view === 'detail' ? `${selectedLead?.first_name || ''} ${selectedLead?.last_name || ''}` : view}
-        </h2>
-        {view !== 'detail' && view !== 'dashboard' && <CategoryBadge category={activeCategory} />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {crumbs.map((cr, i) => (
+            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {i > 0 && <span style={{ color: C.slateLight, fontSize: 11 }}>›</span>}
+              <span onClick={() => { if (cr.view !== view) setView(cr.view); }} style={{ fontSize: i === crumbs.length - 1 ? 14 : 12, fontWeight: i === crumbs.length - 1 ? 700 : 500, color: i === crumbs.length - 1 ? C.dark : C.slate, cursor: i === crumbs.length - 1 ? 'default' : 'pointer', transition: 'color 0.15s' }} onMouseEnter={e => { if (i < crumbs.length - 1) e.target.style.color = C.orange; }} onMouseLeave={e => { if (i < crumbs.length - 1) e.target.style.color = C.slate; }}>{cr.label}</span>
+            </span>
+          ))}
+        </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {followUps.length > 0 && <span onClick={() => setView('leads')} style={{ padding: '3px 9px', borderRadius: 6, background: C.amberBg, color: '#92400e', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>⏰ {followUps.length} due</span>}
@@ -436,7 +465,8 @@ function CRMApp({ user, onLogout }) {
         <button onClick={onLogout} style={btnTopbar}>Logout</button>
       </div>
     </div>
-  );
+    );
+  };
 
   // ---- DASHBOARD (role-based) ----
   const Dashboard = () => {
@@ -636,7 +666,7 @@ function CRMApp({ user, onLogout }) {
             {ALL_COLUMNS.filter(c => visibleCols.includes(c.key)).map(h => (
               <th key={h.key} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{h.label}</th>
             ))}
-            {isAdminOrManager && <th style={{ padding: '12px 8px', width: 36 }}></th>}
+            
           </tr></thead>
           <tbody>
             {leads.map((l, idx) => (
@@ -672,12 +702,10 @@ function CRMApp({ user, onLogout }) {
                 {visibleCols.includes('source') && <td style={tdV}><span style={{ fontSize: 10, color: C.slateLight }}>{l.referrer?.substring(0, 25) || '—'}</span></td>}
                 {visibleCols.includes('followup') && <td style={tdV}><span style={{ fontSize: 11, color: l.follow_up_date ? C.orange : C.slateLight, fontWeight: l.follow_up_date ? 600 : 400 }}>{l.follow_up_date ? fmtDateShort(l.follow_up_date) : '—'}</span></td>}
                 {visibleCols.includes('updated') && <td style={tdV}><span style={{ fontSize: 10, color: C.slateLight }}>{timeAgo(l.updated_at)}</span></td>}
-                {isAdminOrManager && <td style={{ padding: '12px 8px', verticalAlign: 'middle', textAlign: 'center' }}>
-                  <button onClick={e => deleteLead(l.lead_id, e)} title="Delete" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: C.slateLight, opacity: 0.4, transition: 'opacity 0.2s' }} onMouseEnter={e => { e.target.style.opacity = '1'; e.target.style.color = C.red; }} onMouseLeave={e => { e.target.style.opacity = '0.4'; e.target.style.color = C.slateLight; }}>✕</button>
-                </td>}
+
               </tr>
             ))}
-            {leads.length === 0 && <tr><td colSpan={visibleCols.length + (isAdminOrManager ? 1 : 0)} style={{ textAlign: 'center', padding: 50, color: C.slateLight, fontSize: 13 }}>
+            {leads.length === 0 && <tr><td colSpan={visibleCols.length} style={{ textAlign: 'center', padding: 50, color: C.slateLight, fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
               No leads found — try adjusting your filters
             </td></tr>}
@@ -695,16 +723,16 @@ function CRMApp({ user, onLogout }) {
         {STATUSES.filter(s => s.key !== 'lost').map(status => {
           const col = leads.filter(l => l.status === status.key);
           return (
-            <div key={status.key} style={{ flex: '1 1 0', minWidth: 190, background: C.cream, borderRadius: 10, padding: 8, fontFamily: FONT }}>
+            <div key={status.key} style={{ flex: '1 1 0', minWidth: 200, background: `linear-gradient(180deg, ${C.cream}, ${C.white})`, borderRadius: 12, padding: 10, fontFamily: FONT, border: `1px solid ${C.borderLight}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, padding: '0 4px' }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: status.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{status.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: status.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{status.label}</span>
                 <span style={{ fontSize: 10, background: status.bg, color: status.color, padding: '1px 7px', borderRadius: 8, fontWeight: 700 }}>{col.length}</span>
               </div>
               {col.map(l => (
-                <div key={l.lead_id} onClick={() => openDetail(l)} style={{ background: C.white, borderRadius: 8, padding: '9px 11px', border: `1px solid ${C.borderLight}`, cursor: 'pointer', marginBottom: 6, transition: 'box-shadow 0.15s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</span><PriorityDot priority={l.priority} /></div>
+                <div key={l.lead_id} onClick={() => openDetail(l)} style={{ background: C.white, borderRadius: 10, padding: '11px 13px', border: `1px solid ${C.borderLight}`, cursor: 'pointer', marginBottom: 8, transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, letterSpacing: -0.2 }}>{l.first_name} {l.last_name}</span><PriorityDot priority={l.priority} /></div>
                   <div style={{ fontSize: 10, color: C.slateLight, marginTop: 2 }}>{getFlag(l.nationality)} {l.nationality}</div>
-                  <div style={{ fontSize: 10, color: C.slateDark, marginTop: 1 }}>{l.treatment_sought || l.service_type}</div>
+                  <div style={{ fontSize: 11, color: C.slateDark, marginTop: 2, fontWeight: 500 }}>{l.treatment_sought || l.service_type}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 5, borderTop: `1px solid ${C.borderLight}`, fontSize: 9, color: C.slateLight }}><span>{l.assigned_counselor}</span><span>{timeAgo(l.created_at)}</span></div>
                 </div>
               ))}
@@ -751,7 +779,7 @@ function CRMApp({ user, onLogout }) {
         {/* Header */}
         <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, color: C.white, padding: '18px 22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <button onClick={(e) => { e.preventDefault(); setView('leads'); }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
+            <button onClick={(e) => { e.preventDefault(); setView('leads'); }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{lead.prefix} {lead.first_name} {lead.last_name}</h2>
@@ -766,7 +794,8 @@ function CRMApp({ user, onLogout }) {
             {isAdminOrManager && <select value={lead.assigned_counselor} onChange={e => updateLead(lead.lead_id, { assigned_counselor: e.target.value })} style={hdrSel}>{counselors.map(c => <option key={c} value={c} style={{ color: C.dark }}>{c}</option>)}</select>}
             <select value={lead.priority || 'medium'} onChange={e => updateLead(lead.lead_id, { priority: e.target.value })} style={hdrSel}>{PRIORITIES.map(p => <option key={p.key} value={p.key} style={{ color: C.dark }}>{p.label}</option>)}</select>
             <select value={lead.lead_category || 'patient'} onChange={e => updateLead(lead.lead_id, { lead_category: e.target.value })} style={hdrSel}>{CATEGORIES.map(c => <option key={c.key} value={c.key} style={{ color: C.dark }}>{c.label}</option>)}</select>
-            {waUrl && <a href={waUrl} target="_blank" rel="noreferrer" style={{ padding: '5px 12px', borderRadius: 6, background: '#25D366', color: C.white, textDecoration: 'none', fontSize: 11, fontWeight: 600 }}>WhatsApp</a>}
+            {waUrl && <a href={waUrl} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 8, background: '#25D366', color: C.white, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>WhatsApp</a>}
+            {isAdminOrManager && <button onClick={() => { if (window.confirm('Delete this lead permanently? This cannot be undone.')) { deleteLead(lead.lead_id, { stopPropagation: () => {} }); setView('leads'); } }} style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Delete Lead</button>}
           </div>
         </div>
 
@@ -954,7 +983,7 @@ function CRMApp({ user, onLogout }) {
           {[{ label: 'Total (30d)', value: totalLeads, color: C.teal }, { label: 'Converted', value: totalConverted, color: C.green }, { label: 'Lost', value: totalLost, color: C.red }, { label: 'Conv Rate', value: `${avgConvRate}%`, color: C.purple }].map((s, i) => (
             <div key={i} style={{ background: C.white, borderRadius: 10, padding: '16px 18px', border: `1px solid ${C.borderLight}` }}>
               <div style={{ fontSize: 9, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>{s.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: s.color, marginTop: 2 }}>{s.value}</div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: s.color, marginTop: 4 }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -963,14 +992,14 @@ function CRMApp({ user, onLogout }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ borderBottom: `2px solid ${C.borderLight}` }}>
               {['Counselor', 'Total', 'Converted', 'Active', 'Lost', 'Conv %', 'Overdue', 'Avg Resp', 'Week'].map(h => (
-                <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: C.slate, textTransform: 'uppercase' }}>{h}</th>
+                <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.6 }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>{performance.map(p => {
               const rate = p.total > 0 ? Math.round((parseInt(p.converted) / parseInt(p.total)) * 100) : 0;
               return (
                 <tr key={p.assigned_counselor} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                  <td style={{ padding: '8px 10px', fontWeight: 600, fontSize: 12 }}>{p.assigned_counselor}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13 }}><div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CounselorAvatar name={p.assigned_counselor} size={24} />{p.assigned_counselor}</div></td>
                   <td style={{ padding: '8px 10px', fontSize: 12 }}>{p.total}</td>
                   <td style={{ padding: '8px 10px', fontSize: 12, color: C.green, fontWeight: 700 }}>{p.converted}</td>
                   <td style={{ padding: '8px 10px', fontSize: 12, color: C.amber }}>{p.active}</td>
@@ -1295,7 +1324,7 @@ function CRMApp({ user, onLogout }) {
             </tr></thead>
             <tbody>{users.map(u => (
               <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, opacity: u.is_active ? 1 : 0.5 }}>
-                <td style={td}><span style={{ fontWeight: 600, fontSize: 12 }}>{u.display_name}</span></td>
+                <td style={td}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><CounselorAvatar name={u.display_name} size={28} /><span style={{ fontWeight: 700, fontSize: 13 }}>{u.display_name}</span></div></td>
                 <td style={td}><span style={{ fontSize: 11, fontFamily: 'monospace', color: C.slate }}>{u.username}</span></td>
                 <td style={td}><span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, color: u.role === 'admin' ? C.red : u.role === 'manager' ? C.purple : C.teal, background: u.role === 'admin' ? C.redBg : u.role === 'manager' ? C.purpleBg : C.tealBg, textTransform: 'uppercase' }}>{u.role}</span></td>
                 <td style={td}><span style={{ fontSize: 11, color: C.slateDark }}>{u.email || '—'}</span></td>

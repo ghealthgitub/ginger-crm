@@ -433,11 +433,11 @@ function CRMApp({ user, onLogout }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12, marginBottom: 18 }}>
           {[
-            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal, icon: '🏥', action: () => { setActiveCategory('patient'); setView('leads'); } },
-            { label: 'New Today', value: stats.today, color: C.green, icon: '🆕', action: () => { setFilterStatus('new'); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Urgent', value: stats.urgent, color: C.red, icon: '🚨', action: () => { setFilterUrgency('Urgent'); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange, icon: '⏰', action: () => { setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple, icon: '📈', action: () => { setView('analytics'); } },
+            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal, icon: '🏥', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'New Today', value: stats.today, color: C.green, icon: '🆕', action: () => { setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setFilterStatus('new'); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Urgent', value: stats.urgent, color: C.red, icon: '🚨', action: () => { setFilterStatus('all'); setFilterCounselor('all'); setSearch(''); setFilterUrgency('Urgent'); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange, icon: '⏰', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple, icon: '📈', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setView('analytics'); } },
           ].map((s, i) => (
             <div key={i} onClick={s.action} style={{ background: `linear-gradient(135deg, ${C.white}, ${s.color}04)`, borderRadius: 14, padding: '16px 18px', border: `1px solid ${s.color}18`, position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${s.color}15`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}>
               <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: `linear-gradient(180deg, ${s.color}, ${s.color}80)`, borderRadius: '14px 0 0 14px' }} />
@@ -484,7 +484,7 @@ function CRMApp({ user, onLogout }) {
               const count = stats.byStatus[s.key] || 0;
               const pct = stats.total > 0 ? (count / stats.total * 100) : 0;
               return (
-                <div key={s.key} onClick={() => { setFilterStatus(s.key); setActiveCategory('patient'); setView('leads'); }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, cursor: 'pointer', padding: '2px 0', borderRadius: 4, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div key={s.key} onClick={() => { setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setFilterStatus(s.key); setActiveCategory('patient'); setView('leads'); }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, cursor: 'pointer', padding: '2px 0', borderRadius: 4, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: 10, width: 70, textAlign: 'right', color: C.slate, fontFamily: FONT }}>{s.label}</span>
                   <div style={{ flex: 1, height: 16, background: C.offWhite, borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 4, minWidth: count > 0 ? 16 : 0, transition: 'width 0.4s' }} />
@@ -515,7 +515,7 @@ function CRMApp({ user, onLogout }) {
                 const rate = p.total > 0 ? Math.round((parseInt(p.converted) / parseInt(p.total)) * 100) : 0;
                 const c = colors[i % colors.length];
                 return (
-                  <div key={p.assigned_counselor} onClick={() => { setFilterCounselor(p.assigned_counselor); setActiveCategory('patient'); setView('leads'); }} style={{ padding: 14, background: `linear-gradient(145deg, ${C.white}, ${c}06)`, borderRadius: 12, border: `1px solid ${c}15`, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c}12`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                  <div key={p.assigned_counselor} onClick={() => { setFilterStatus('all'); setFilterUrgency('all'); setSearch(''); setFilterCounselor(p.assigned_counselor); setActiveCategory('patient'); setView('leads'); }} style={{ padding: 14, background: `linear-gradient(145deg, ${C.white}, ${c}06)`, borderRadius: 12, border: `1px solid ${c}15`, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c}12`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                       <div style={{ width: 28, height: 28, borderRadius: 7, background: `${c}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: c }}>{p.assigned_counselor?.charAt(0)}</div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{p.assigned_counselor}</div>

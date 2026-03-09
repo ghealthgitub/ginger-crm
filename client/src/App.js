@@ -94,6 +94,11 @@ function fmtDateShort(d) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+
+// Country to flag emoji
+const COUNTRY_FLAGS = {'Afghanistan':'🇦🇫','Albania':'🇦🇱','Algeria':'🇩🇿','Angola':'🇦🇴','Argentina':'🇦🇷','Armenia':'🇦🇲','Australia':'🇦🇺','Austria':'🇦🇹','Azerbaijan':'🇦🇿','Bahamas':'🇧🇸','Bahrain':'🇧🇭','Bangladesh':'🇧🇩','Barbados':'🇧🇧','Belarus':'🇧🇾','Belgium':'🇧🇪','Benin':'🇧🇯','Bhutan':'🇧🇹','Bolivia':'🇧🇴','Bosnia and Herzegovina':'🇧🇦','Botswana':'🇧🇼','Brazil':'🇧🇷','Brunei':'🇧🇳','Bulgaria':'🇧🇬','Burkina Faso':'🇧🇫','Burundi':'🇧🇮','Cambodia':'🇰🇭','Cameroon':'🇨🇲','Canada':'🇨🇦','Chad':'🇹🇩','Chile':'🇨🇱','China':'🇨🇳','Colombia':'🇨🇴','Congo (DRC)':'🇨🇩','Congo (Republic)':'🇨🇬','Costa Rica':'🇨🇷','Croatia':'🇭🇷','Cuba':'🇨🇺','Cyprus':'🇨🇾','Czech Republic':'🇨🇿','Denmark':'🇩🇰','Dominican Republic':'🇩🇴','Ecuador':'🇪🇨','Egypt':'🇪🇬','El Salvador':'🇸🇻','Eritrea':'🇪🇷','Estonia':'🇪🇪','Ethiopia':'🇪🇹','Fiji':'🇫🇯','Finland':'🇫🇮','France':'🇫🇷','Gabon':'🇬🇦','Gambia':'🇬🇲','Georgia':'🇬🇪','Germany':'🇩🇪','Ghana':'🇬🇭','Greece':'🇬🇷','Guatemala':'🇬🇹','Guinea':'🇬🇳','Guyana':'🇬🇾','Haiti':'🇭🇹','Honduras':'🇭🇳','Hungary':'🇭🇺','Iceland':'🇮🇸','India':'🇮🇳','Indonesia':'🇮🇩','Iran':'🇮🇷','Iraq':'🇮🇶','Ireland':'🇮🇪','Israel':'🇮🇱','Italy':'🇮🇹','Ivory Coast':'🇨🇮','Jamaica':'🇯🇲','Japan':'🇯🇵','Jordan':'🇯🇴','Kazakhstan':'🇰🇿','Kenya':'🇰🇪','Kosovo':'🇽🇰','Kuwait':'🇰🇼','Kyrgyzstan':'🇰🇬','Laos':'🇱🇦','Latvia':'🇱🇻','Lebanon':'🇱🇧','Liberia':'🇱🇷','Libya':'🇱🇾','Lithuania':'🇱🇹','Luxembourg':'🇱🇺','Madagascar':'🇲🇬','Malawi':'🇲🇼','Malaysia':'🇲🇾','Maldives':'🇲🇻','Mali':'🇲🇱','Malta':'🇲🇹','Mauritania':'🇲🇷','Mauritius':'🇲🇺','Mexico':'🇲🇽','Moldova':'🇲🇩','Mongolia':'🇲🇳','Montenegro':'🇲🇪','Morocco':'🇲🇦','Mozambique':'🇲🇿','Myanmar':'🇲🇲','Namibia':'🇳🇦','Nepal':'🇳🇵','Netherlands':'🇳🇱','New Zealand':'🇳🇿','Nicaragua':'🇳🇮','Niger':'🇳🇪','Nigeria':'🇳🇬','North Korea':'🇰🇵','North Macedonia':'🇲🇰','Norway':'🇳🇴','Oman':'🇴🇲','Pakistan':'🇵🇰','Palestine':'🇵🇸','Panama':'🇵🇦','Papua New Guinea':'🇵🇬','Paraguay':'🇵🇾','Peru':'🇵🇪','Philippines':'🇵🇭','Poland':'🇵🇱','Portugal':'🇵🇹','Qatar':'🇶🇦','Romania':'🇷🇴','Russia':'🇷🇺','Rwanda':'🇷🇼','Saudi Arabia':'🇸🇦','Senegal':'🇸🇳','Serbia':'🇷🇸','Seychelles':'🇸🇨','Sierra Leone':'🇸🇱','Singapore':'🇸🇬','Slovakia':'🇸🇰','Slovenia':'🇸🇮','Somalia':'🇸🇴','South Africa':'🇿🇦','South Korea':'🇰🇷','South Sudan':'🇸🇸','Spain':'🇪🇸','Sri Lanka':'🇱🇰','Sudan':'🇸🇩','Suriname':'🇸🇷','Sweden':'🇸🇪','Switzerland':'🇨🇭','Syria':'🇸🇾','Taiwan':'🇹🇼','Tajikistan':'🇹🇯','Tanzania':'🇹🇿','Thailand':'🇹🇭','Togo':'🇹🇬','Trinidad and Tobago':'🇹🇹','Tunisia':'🇹🇳','Turkey':'🇹🇷','Turkmenistan':'🇹🇲','Uganda':'🇺🇬','Ukraine':'🇺🇦','UAE':'🇦🇪','UK':'🇬🇧','USA':'🇺🇸','Uruguay':'🇺🇾','Uzbekistan':'🇺🇿','Venezuela':'🇻🇪','Vietnam':'🇻🇳','Yemen':'🇾🇪','Zambia':'🇿🇲','Zimbabwe':'🇿🇼'};
+function getFlag(country) { return COUNTRY_FLAGS[country] || '🌍'; }
+
 // ============================================================
 // SHARED MICRO COMPONENTS
 // ============================================================
@@ -433,20 +438,20 @@ function CRMApp({ user, onLogout }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12, marginBottom: 18 }}>
           {[
-            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal, icon: '🏥', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'New Today', value: stats.today, color: C.green, icon: '🆕', action: () => { setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setFilterStatus('new'); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Urgent', value: stats.urgent, color: C.red, icon: '🚨', action: () => { setFilterStatus('all'); setFilterCounselor('all'); setSearch(''); setFilterUrgency('Urgent'); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange, icon: '⏰', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setActiveCategory('patient'); setView('leads'); } },
-            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple, icon: '📈', action: () => { setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setView('analytics'); } },
+            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal, icon: '🏥' },
+            { label: 'New Today', value: stats.today, color: C.green, icon: '🆕' },
+            { label: 'Urgent', value: stats.urgent, color: C.red, icon: '🚨' },
+            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange, icon: '⏰' },
+            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple, icon: '📈' },
           ].map((s, i) => (
-            <div key={i} onClick={s.action} style={{ background: `linear-gradient(135deg, ${C.white}, ${s.color}04)`, borderRadius: 14, padding: '16px 18px', border: `1px solid ${s.color}18`, position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${s.color}15`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}>
+            <div key={i} style={{ background: `linear-gradient(135deg, ${C.white}, ${s.color}04)`, borderRadius: 14, padding: '16px 18px', border: `1px solid ${s.color}18`, position: 'relative', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: `linear-gradient(180deg, ${s.color}, ${s.color}80)`, borderRadius: '14px 0 0 14px' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 9.5, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4, fontFamily: FONT }}>{s.label}</div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
                 </div>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{s.icon}</div>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{s.icon}</div>
               </div>
             </div>
           ))}
@@ -470,7 +475,7 @@ function CRMApp({ user, onLogout }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, fontFamily: FONT }}>⏰ Follow-Ups Due ({followUps.length})</div>
             {followUps.slice(0, 5).map(l => (
               <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid #fde68a', cursor: 'pointer' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 10, color: C.slate, fontWeight: 400 }}>· {l.nationality}</span></span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 10, color: C.slate, fontWeight: 400 }}>· {getFlag(l.nationality)} {l.nationality}</span></span>
                 <span style={{ fontSize: 10, color: '#92400e' }}>{l.follow_up_note?.substring(0, 30) || 'Follow up'}</span>
               </div>
             ))}
@@ -498,7 +503,7 @@ function CRMApp({ user, onLogout }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>{isAdminOrManager ? 'Recent Leads' : 'My Recent Leads'}</div>
             {leads.filter(l => l.lead_category === 'patient' || !l.lead_category).slice(0, 6).map(l => (
               <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
-                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.nationality} · {l.treatment_sought || l.service_type || '—'}</div></div>
+                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{getFlag(l.nationality)} {l.nationality} · {l.treatment_sought || l.service_type || '—'}</div></div>
                 <div style={{ textAlign: 'right' }}><StatusBadge status={l.status} small /><div style={{ fontSize: 9, color: C.slateLight, marginTop: 1 }}>{timeAgo(l.created_at)}</div></div>
               </div>
             ))}
@@ -561,29 +566,63 @@ function CRMApp({ user, onLogout }) {
     </div>
   );
 
-  // ---- LEADS TABLE ----
+  // ---- LEADS TABLE (vibrant, engaging) ----
+  const deleteLead = async (leadId, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this lead permanently?')) return;
+    try {
+      await leadsApi.update(leadId, { lead_category: 'deleted' });
+      fetchData();
+    } catch (err) { console.error('Delete failed:', err); }
+  };
+
   const LeadsList = () => (
     <div>
       <Toolbar />
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', background: C.white, borderRadius: 10, overflow: 'hidden', border: `1px solid ${C.borderLight}`, borderCollapse: 'collapse', fontFamily: FONT }}>
-          <thead><tr style={{ background: C.cream }}>
-            {['Lead', 'Contact', 'Treatment', 'Status', 'Counselor', 'Added'].map(h => (
-              <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 9.5, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.8, borderBottom: `1.5px solid ${C.border}` }}>{h}</th>
+        <table style={{ width: '100%', background: C.white, borderRadius: 14, overflow: 'hidden', border: `1px solid ${C.border}`, borderCollapse: 'collapse', fontFamily: FONT, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <thead><tr style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})` }}>
+            {['Lead', 'Contact', 'Treatment', 'Status', 'Counselor', 'Added', ...(isAdminOrManager ? [''] : [])].map(h => (
+              <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {leads.map(l => (
-              <tr key={l.lead_id} onClick={() => openDetail(l)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.borderLight}`, transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = ''}>
-                <td style={td}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><PriorityDot priority={l.priority} /><div><div style={{ fontWeight: 600, fontSize: 12, color: C.dark }}>{l.prefix} {l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>🌍 {l.nationality}</div></div></div></td>
-                <td style={td}><div style={{ fontSize: 11, color: C.slateDark }}>{l.contact_preference || '—'}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.email}</div></td>
-                <td style={td}><div style={{ fontSize: 12, fontWeight: 500, color: C.dark }}>{l.treatment_sought || l.service_type || '—'}</div>{l.urgency_level && <span style={{ fontSize: 9, fontWeight: 600, color: URGENCY_COLORS[l.urgency_level] || C.slate }}>{l.urgency_level}</span>}</td>
-                <td style={td}><StatusBadge status={l.status} small /></td>
-                <td style={td}><span style={{ fontSize: 12, color: C.slateDark }}>{l.assigned_counselor}</span></td>
-                <td style={td}><span style={{ fontSize: 10, color: C.slateLight }}>{timeAgo(l.created_at)}</span></td>
+            {leads.map((l, idx) => (
+              <tr key={l.lead_id} onClick={() => openDetail(l)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.borderLight}`, background: idx % 2 === 0 ? C.white : `${C.cream}80`, transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = `${C.orange}06`; e.currentTarget.style.transform = 'scale(1.002)'; }} onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.white : `${C.cream}80`; e.currentTarget.style.transform = 'scale(1)'; }}>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <PriorityDot priority={l.priority} />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: C.dark, letterSpacing: -0.2 }}>{l.prefix} {l.first_name} {l.last_name}</div>
+                      <div style={{ fontSize: 12, color: C.slate, marginTop: 1 }}>{getFlag(l.nationality)} {l.nationality}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                  <div style={{ fontSize: 12, color: C.slateDark, fontWeight: 500 }}>{l.contact_preference || '—'}</div>
+                  <div style={{ fontSize: 11, color: C.blue, marginTop: 1, textDecoration: 'underline', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); window.open('mailto:' + l.email); }}>{l.email}</div>
+                </td>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: C.dark }}>{l.treatment_sought || l.service_type || '—'}</div>
+                  {l.urgency_level && <span style={{ fontSize: 10, fontWeight: 700, color: URGENCY_COLORS[l.urgency_level] || C.slate, background: `${URGENCY_COLORS[l.urgency_level] || C.slate}10`, padding: '1px 6px', borderRadius: 4, marginTop: 2, display: 'inline-block' }}>{l.urgency_level}</span>}
+                </td>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}><StatusBadge status={l.status} /></td>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: 6, background: `${C.orange}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: C.orange }}>{l.assigned_counselor?.charAt(0)}</div>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{l.assigned_counselor}</span>
+                  </div>
+                </td>
+                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}><span style={{ fontSize: 11, color: C.slateLight }}>{timeAgo(l.created_at)}</span></td>
+                {isAdminOrManager && <td style={{ padding: '12px 8px', verticalAlign: 'middle', textAlign: 'center' }}>
+                  <button onClick={e => deleteLead(l.lead_id, e)} title="Delete" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: C.slateLight, opacity: 0.4, transition: 'opacity 0.2s' }} onMouseEnter={e => { e.target.style.opacity = '1'; e.target.style.color = C.red; }} onMouseLeave={e => { e.target.style.opacity = '0.4'; e.target.style.color = C.slateLight; }}>✕</button>
+                </td>}
               </tr>
             ))}
-            {leads.length === 0 && <tr><td colSpan={6} style={{ ...td, textAlign: 'center', padding: 40, color: C.slateLight }}>No leads found</td></tr>}
+            {leads.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 50, color: C.slateLight, fontSize: 13 }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
+              No leads found — try adjusting your filters
+            </td></tr>}
           </tbody>
         </table>
       </div>
@@ -606,7 +645,7 @@ function CRMApp({ user, onLogout }) {
               {col.map(l => (
                 <div key={l.lead_id} onClick={() => openDetail(l)} style={{ background: C.white, borderRadius: 8, padding: '9px 11px', border: `1px solid ${C.borderLight}`, cursor: 'pointer', marginBottom: 6, transition: 'box-shadow 0.15s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</span><PriorityDot priority={l.priority} /></div>
-                  <div style={{ fontSize: 10, color: C.slateLight, marginTop: 2 }}>{l.nationality}</div>
+                  <div style={{ fontSize: 10, color: C.slateLight, marginTop: 2 }}>{getFlag(l.nationality)} {l.nationality}</div>
                   <div style={{ fontSize: 10, color: C.slateDark, marginTop: 1 }}>{l.treatment_sought || l.service_type}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 5, borderTop: `1px solid ${C.borderLight}`, fontSize: 9, color: C.slateLight }}><span>{l.assigned_counselor}</span><span>{timeAgo(l.created_at)}</span></div>
                 </div>
@@ -660,7 +699,7 @@ function CRMApp({ user, onLogout }) {
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{lead.prefix} {lead.first_name} {lead.last_name}</h2>
                 <CategoryBadge category={lead.lead_category} small />
               </div>
-              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>🌍 {lead.nationality} · {lead.email} · {lead.isd} {lead.phone} · {lead.lead_id}</div>
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{getFlag(lead.nationality)} {lead.nationality} · {lead.email} · {lead.isd} {lead.phone} · {lead.lead_id}</div>
             </div>
             <StatusBadge status={lead.status} />
           </div>

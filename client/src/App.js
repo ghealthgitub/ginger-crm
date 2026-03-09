@@ -35,7 +35,7 @@ const STATUSES = [
 ];
 
 const CATEGORIES = [
-  { key: 'patient', label: 'Patients', icon: '🏥', color: C.teal, desc: 'Medical enquiries' },
+  { key: 'patient', label: 'Leads', icon: '📋', color: C.orange, desc: 'Medical enquiries' },
   { key: 'other', label: 'Other', icon: '💼', color: C.purple, desc: 'Partnerships & jobs' },
   { key: 'spam', label: 'Non-Targeted', icon: '🚫', color: C.slateLight, desc: 'Blocked regions' },
 ];
@@ -70,6 +70,18 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', counselor: 'Counselor' };
+
+// Counselor images — update URLs after uploading photos
+const COUNSELOR_IMAGES = {
+  'Dolma': 'https://ghealth121.com/wp-content/uploads/2025/12/Dolma.jpg',
+  'Riyashree': 'https://ghealth121.com/wp-content/uploads/2025/12/Riashree-Das.jpg',
+  'Anushka': 'https://ghealth121.com/wp-content/uploads/2025/12/Anushka-Nasrin.jpg',
+};
+const CounselorAvatar = ({ name, size = 26 }) => {
+  const img = COUNSELOR_IMAGES[name];
+  if (img) return <img src={img} alt={name} style={{ width: size, height: size, borderRadius: size/3, objectFit: 'cover', border: `2px solid ${C.orange}20`, flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }} />;
+  return <div style={{ width: size, height: size, borderRadius: size/3, background: `${C.orange}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, color: C.orange, flexShrink: 0 }}>{name?.charAt(0)}</div>;
+};
 
 // ============================================================
 // UTILITIES
@@ -349,54 +361,59 @@ function CRMApp({ user, onLogout }) {
     if (isAdminOrManager) nav.push({ key: 'scheduling', label: 'Scheduling', icon: '◷' });
     if (isAdmin) nav.push({ key: 'settings', label: 'Settings', icon: '⚙' });
 
+    const sideBtn = (key, label, icon, isView) => {
+      const active = isView ? view === key || (view === 'detail' && key === 'leads') : false;
+      return (
+        <button key={key} onClick={() => setView(key)}
+          style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '8px 10px', borderRadius: 8, border: 'none', background: active ? `${C.orange}15` : 'transparent', color: active ? C.orangeLight : 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12.5, fontWeight: active ? 600 : 400, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 2, transition: 'all 0.15s', fontFamily: FONT }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+          {!collapsed && <span>{label}</span>}
+        </button>
+      );
+    };
+
+    const catBtn = (cat) => {
+      const isActive = activeCategory === cat.key && (view === 'leads' || view === 'detail');
+      return (
+        <button key={cat.key} onClick={() => { setActiveCategory(cat.key); setFilterStatus('all'); setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setView('leads'); }}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 10px', borderRadius: 8, border: 'none', background: isActive ? `${cat.color}15` : 'transparent', color: isActive ? C.orangeLight : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400, textAlign: 'left', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
+          <span style={{ fontSize: 13 }}>{cat.icon}</span><span>{cat.label}</span>
+        </button>
+      );
+    };
+
     return (
-      <div style={{ width: collapsed ? 56 : 210, background: C.navy, color: C.white, display: 'flex', flexDirection: 'column', transition: 'width 0.2s ease', flexShrink: 0, fontFamily: FONT, borderRight: `1px solid ${C.navyMid}` }}>
+      <div style={{ width: collapsed ? 56 : 220, background: C.navy, color: C.white, display: 'flex', flexDirection: 'column', transition: 'width 0.2s ease', flexShrink: 0, fontFamily: FONT, borderRight: `1px solid ${C.navyMid}` }}>
         <div style={{ padding: collapsed ? '16px 8px' : '16px 18px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.navyMid}` }}>
-          <img src={LOGO_URL} alt="G" style={{ height: 28, borderRadius: 6, flexShrink: 0 }} />
-          {!collapsed && <div><div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.2 }}>Ginger CRM</div></div>}
+          <img src={LOGO_URL} alt="G" style={{ height: 30, borderRadius: 6, flexShrink: 0 }} />
+          {!collapsed && <div><div style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2 }}>Ginger CRM</div></div>}
         </div>
 
-        {/* Dashboard - always first */}
-        <div style={{ padding: '8px 10px 2px' }}>
-          <button onClick={() => setView('dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '9px 10px', borderRadius: 6, border: 'none', background: view === 'dashboard' ? `${C.teal}18` : 'transparent', color: view === 'dashboard' ? C.tealLight : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', transition: 'all 0.15s', fontFamily: FONT }}>
-            <span style={{ fontSize: 14, flexShrink: 0 }}>◻</span>
-            {!collapsed && <span>Dashboard</span>}
-          </button>
-        </div>
+        <div style={{ padding: '8px 10px 0', flex: 1, overflowY: 'auto' }}>
+          {/* Dashboard */}
+          {sideBtn('dashboard', 'Dashboard', '◻', true)}
 
-        {/* Inbox categories */}
-        {!collapsed && (
-          <div style={{ padding: '6px 10px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, paddingLeft: 6 }}>Inbox</div>
-            {CATEGORIES.map(cat => {
-              const isActive = activeCategory === cat.key && (view === 'leads' || view === 'detail');
-              return (
-              <button key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 8px', borderRadius: 6, border: 'none', background: isActive ? 'rgba(14,165,160,0.12)' : 'transparent', color: isActive ? C.tealLight : 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400, textAlign: 'left', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
-                <span style={{ fontSize: 13 }}>{cat.icon}</span><span>{cat.label}</span>
-              </button>
-              );
-            })}
-          </div>
-        )}
+          {/* Primary: Leads & Pipeline */}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Leads</div>}
+          {catBtn(CATEGORIES[0])}
+          {sideBtn('pipeline', 'Pipeline', '▥', true)}
 
-        {/* Other navigation */}
-        <div style={{ padding: '4px 10px', flex: 1 }}>
-          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, paddingLeft: 6 }}>Tools</div>}
-          {nav.filter(n => n.key !== 'dashboard').map(item => (
-            <button key={item.key} onClick={() => setView(item.key)}
-              style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 8, width: '100%', padding: collapsed ? '8px 0' : '7px 8px', borderRadius: 6, border: 'none', background: view === item.key ? `${C.teal}18` : 'transparent', color: view === item.key ? C.tealLight : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 1, transition: 'all 0.15s', fontFamily: FONT }}>
-              <span style={{ fontSize: 13, flexShrink: 0, opacity: 0.8 }}>{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
-            </button>
-          ))}
+          {/* Secondary: Other & Non-Targeted */}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Other</div>}
+          {catBtn(CATEGORIES[1])}
+          {catBtn(CATEGORIES[2])}
+
+          {/* Tools */}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '10px 0 4px', paddingLeft: 6 }}>Tools</div>}
+          {isAdminOrManager && sideBtn('analytics', 'Analytics', '◈', true)}
+          {isAdminOrManager && sideBtn('scheduling', 'Scheduling', '◷', true)}
+          {isAdmin && sideBtn('settings', 'Settings', '⚙', true)}
         </div>
 
         <div style={{ padding: collapsed ? '10px 4px' : '10px 14px', borderTop: `1px solid ${C.navyMid}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: `${C.teal}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.teal, flexShrink: 0 }}>{user.name?.charAt(0)}</div>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: `${C.orange}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.orange, flexShrink: 0 }}>{user.name?.charAt(0)}</div>
           {!collapsed && <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{ROLE_LABELS[user.role]}</div>
           </div>}
         </div>
@@ -411,7 +428,7 @@ function CRMApp({ user, onLogout }) {
         <h2 style={{ fontSize: 14, fontWeight: 700, color: C.dark, margin: 0, textTransform: 'capitalize' }}>
           {view === 'detail' ? `${selectedLead?.first_name || ''} ${selectedLead?.last_name || ''}` : view}
         </h2>
-        {view !== 'detail' && <CategoryBadge category={activeCategory} />}
+        {view !== 'detail' && view !== 'dashboard' && <CategoryBadge category={activeCategory} />}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {followUps.length > 0 && <span onClick={() => setView('leads')} style={{ padding: '3px 9px', borderRadius: 6, background: C.amberBg, color: '#92400e', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>⏰ {followUps.length} due</span>}
@@ -522,8 +539,8 @@ function CRMApp({ user, onLogout }) {
                 return (
                   <div key={p.assigned_counselor} onClick={() => { setFilterStatus('all'); setFilterUrgency('all'); setSearch(''); setFilterCounselor(p.assigned_counselor); setActiveCategory('patient'); setView('leads'); }} style={{ padding: 14, background: `linear-gradient(145deg, ${C.white}, ${c}06)`, borderRadius: 12, border: `1px solid ${c}15`, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c}12`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 7, background: `${c}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: c }}>{p.assigned_counselor?.charAt(0)}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{p.assigned_counselor}</div>
+                      <CounselorAvatar name={p.assigned_counselor} size={30} />
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{p.assigned_counselor}</div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       <div><div style={{ fontSize: 18, fontWeight: 800, color: C.dark }}>{p.total}</div><div style={{ fontSize: 8, color: C.slateLight }}>Total</div></div>
@@ -551,18 +568,52 @@ function CRMApp({ user, onLogout }) {
     );
   };
 
+  // Column options for customization
+  const ALL_COLUMNS = [
+    { key: 'lead', label: 'Lead', default: true },
+    { key: 'contact', label: 'Contact', default: true },
+    { key: 'treatment', label: 'Treatment', default: true },
+    { key: 'status', label: 'Status', default: true },
+    { key: 'counselor', label: 'Counselor', default: true },
+    { key: 'added', label: 'Added', default: true },
+    { key: 'urgency', label: 'Urgency', default: false },
+    { key: 'nationality', label: 'Country', default: false },
+    { key: 'phone', label: 'Phone', default: false },
+    { key: 'source', label: 'Source', default: false },
+    { key: 'followup', label: 'Follow-up Date', default: false },
+    { key: 'updated', label: 'Last Updated', default: false },
+  ];
+  const [visibleCols, setVisibleCols] = useState(() => ALL_COLUMNS.filter(c => c.default).map(c => c.key));
+  const [showColPicker, setShowColPicker] = useState(false);
+
   // ---- TOOLBAR ----
   const Toolbar = () => (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', fontFamily: FONT }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 8, padding: '7px 12px', flex: '1 1 280px', maxWidth: 360 }}>
-        <span style={{ color: C.slateLight, fontSize: 13 }}>⌕</span>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads..." style={{ border: 'none', outline: 'none', fontSize: 12, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
-        {search && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 11 }} onClick={() => setSearch('')}>✕</span>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '8px 14px', flex: '1 1 280px', maxWidth: 380 }}>
+        <span style={{ color: C.slateLight, fontSize: 14 }}>⌕</span>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads..." style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
+        {search && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 12 }} onClick={() => setSearch('')}>✕</span>}
       </div>
       <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selStyle}><option value="all">All Status</option>{STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
       {isAdminOrManager && <select value={filterCounselor} onChange={e => setFilterCounselor(e.target.value)} style={selStyle}><option value="all">All Counselors</option>{counselors.map(c => <option key={c} value={c}>{c}</option>)}</select>}
       <select value={filterUrgency} onChange={e => setFilterUrgency(e.target.value)} style={selStyle}><option value="all">All Urgency</option><option>Emergency</option><option>Urgent</option><option>Semi-Urgent</option><option>Routine</option></select>
-      <div style={{ marginLeft: 'auto', fontSize: 11, color: C.slate }}>{leads.length} leads</div>
+      <div style={{ position: 'relative' }}>
+        <button onClick={() => setShowColPicker(!showColPicker)} style={{ ...btnTopbar, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>⚙ Columns</button>
+        {showColPicker && <div style={{ position: 'absolute', top: 36, right: 0, background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 12, zIndex: 50, width: 200 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.dark, marginBottom: 8 }}>Show Columns</div>
+          {ALL_COLUMNS.map(col => (
+            <label key={col.key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', cursor: 'pointer', fontSize: 12, color: C.slateDark }}>
+              <input type="checkbox" checked={visibleCols.includes(col.key)} onChange={e => {
+                if (e.target.checked) setVisibleCols([...visibleCols, col.key]);
+                else setVisibleCols(visibleCols.filter(k => k !== col.key));
+              }} />
+              {col.label}
+            </label>
+          ))}
+          <button onClick={() => setShowColPicker(false)} style={{ ...btnSmallTeal, marginTop: 8, width: '100%', fontSize: 11 }}>Done</button>
+        </div>}
+      </div>
+      <div style={{ marginLeft: 'auto', fontSize: 12, color: C.slate, fontWeight: 500 }}>{leads.length} leads</div>
     </div>
   );
 
@@ -582,44 +633,51 @@ function CRMApp({ user, onLogout }) {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', background: C.white, borderRadius: 14, overflow: 'hidden', border: `1px solid ${C.border}`, borderCollapse: 'collapse', fontFamily: FONT, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <thead><tr style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})` }}>
-            {['Lead', 'Contact', 'Treatment', 'Status', 'Counselor', 'Added', ...(isAdminOrManager ? [''] : [])].map(h => (
-              <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{h}</th>
+            {ALL_COLUMNS.filter(c => visibleCols.includes(c.key)).map(h => (
+              <th key={h.key} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{h.label}</th>
             ))}
+            {isAdminOrManager && <th style={{ padding: '12px 8px', width: 36 }}></th>}
           </tr></thead>
           <tbody>
             {leads.map((l, idx) => (
               <tr key={l.lead_id} onClick={() => openDetail(l)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.borderLight}`, background: idx % 2 === 0 ? C.white : `${C.cream}80`, transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = `${C.orange}06`; e.currentTarget.style.transform = 'scale(1.002)'; }} onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.white : `${C.cream}80`; e.currentTarget.style.transform = 'scale(1)'; }}>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                {visibleCols.includes('lead') && <td style={tdV}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <PriorityDot priority={l.priority} />
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: C.dark, letterSpacing: -0.2 }}>{l.prefix} {l.first_name} {l.last_name}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14.5, color: C.dark, letterSpacing: -0.2 }}>{l.prefix} {l.first_name} {l.last_name}</div>
                       <div style={{ fontSize: 12, color: C.slate, marginTop: 1 }}>{getFlag(l.nationality)} {l.nationality}</div>
                     </div>
                   </div>
-                </td>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                </td>}
+                {visibleCols.includes('contact') && <td style={tdV}>
                   <div style={{ fontSize: 12, color: C.slateDark, fontWeight: 500 }}>{l.contact_preference || '—'}</div>
                   <div style={{ fontSize: 11, color: C.blue, marginTop: 1, textDecoration: 'underline', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); window.open('mailto:' + l.email); }}>{l.email}</div>
-                </td>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                </td>}
+                {visibleCols.includes('treatment') && <td style={tdV}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: C.dark }}>{l.treatment_sought || l.service_type || '—'}</div>
                   {l.urgency_level && <span style={{ fontSize: 10, fontWeight: 700, color: URGENCY_COLORS[l.urgency_level] || C.slate, background: `${URGENCY_COLORS[l.urgency_level] || C.slate}10`, padding: '1px 6px', borderRadius: 4, marginTop: 2, display: 'inline-block' }}>{l.urgency_level}</span>}
-                </td>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}><StatusBadge status={l.status} /></td>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                </td>}
+                {visibleCols.includes('status') && <td style={tdV}><StatusBadge status={l.status} /></td>}
+                {visibleCols.includes('counselor') && <td style={tdV}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 6, background: `${C.orange}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: C.orange }}>{l.assigned_counselor?.charAt(0)}</div>
+                    <CounselorAvatar name={l.assigned_counselor} size={26} />
                     <span style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{l.assigned_counselor}</span>
                   </div>
-                </td>
-                <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}><span style={{ fontSize: 11, color: C.slateLight }}>{timeAgo(l.created_at)}</span></td>
+                </td>}
+                {visibleCols.includes('added') && <td style={tdV}><span style={{ fontSize: 11, color: C.slateLight }}>{timeAgo(l.created_at)}</span></td>}
+                {visibleCols.includes('urgency') && <td style={tdV}><span style={{ fontSize: 11, fontWeight: 600, color: URGENCY_COLORS[l.urgency_level] || C.slateLight }}>{l.urgency_level || '—'}</span></td>}
+                {visibleCols.includes('nationality') && <td style={tdV}><span style={{ fontSize: 12 }}>{getFlag(l.nationality)} {l.nationality}</span></td>}
+                {visibleCols.includes('phone') && <td style={tdV}><span style={{ fontSize: 11, color: C.slateDark }}>{l.isd} {l.phone}</span></td>}
+                {visibleCols.includes('source') && <td style={tdV}><span style={{ fontSize: 10, color: C.slateLight }}>{l.referrer?.substring(0, 25) || '—'}</span></td>}
+                {visibleCols.includes('followup') && <td style={tdV}><span style={{ fontSize: 11, color: l.follow_up_date ? C.orange : C.slateLight, fontWeight: l.follow_up_date ? 600 : 400 }}>{l.follow_up_date ? fmtDateShort(l.follow_up_date) : '—'}</span></td>}
+                {visibleCols.includes('updated') && <td style={tdV}><span style={{ fontSize: 10, color: C.slateLight }}>{timeAgo(l.updated_at)}</span></td>}
                 {isAdminOrManager && <td style={{ padding: '12px 8px', verticalAlign: 'middle', textAlign: 'center' }}>
                   <button onClick={e => deleteLead(l.lead_id, e)} title="Delete" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: C.slateLight, opacity: 0.4, transition: 'opacity 0.2s' }} onMouseEnter={e => { e.target.style.opacity = '1'; e.target.style.color = C.red; }} onMouseLeave={e => { e.target.style.opacity = '0.4'; e.target.style.color = C.slateLight; }}>✕</button>
                 </td>}
               </tr>
             ))}
-            {leads.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 50, color: C.slateLight, fontSize: 13 }}>
+            {leads.length === 0 && <tr><td colSpan={visibleCols.length + (isAdminOrManager ? 1 : 0)} style={{ textAlign: 'center', padding: 50, color: C.slateLight, fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
               No leads found — try adjusting your filters
             </td></tr>}
@@ -693,7 +751,7 @@ function CRMApp({ user, onLogout }) {
         {/* Header */}
         <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, color: C.white, padding: '18px 22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <button onClick={() => setView('leads')} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
+            <button onClick={(e) => { e.preventDefault(); setView('leads'); }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{lead.prefix} {lead.first_name} {lead.last_name}</h2>
@@ -1290,6 +1348,7 @@ const labelStyle = { display: 'block', fontSize: 10, fontWeight: 700, color: C.s
 const lblSm = { display: 'block', fontSize: 9, fontWeight: 600, color: C.slate, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT };
 const selStyle = { padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 11, color: C.slateDark, background: C.white, cursor: 'pointer', outline: 'none', fontFamily: FONT };
 const td = { padding: '9px 12px', fontSize: 12, verticalAlign: 'middle' };
+const tdV = { padding: '12px 14px', verticalAlign: 'middle' };
 const hdrSel = { padding: '5px 9px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: C.white, fontSize: 11, cursor: 'pointer', fontFamily: FONT };
 const btnTopbar = { background: C.cream, border: `1px solid ${C.border}`, borderRadius: 6, padding: '5px 11px', color: C.slate, cursor: 'pointer', fontSize: 11, fontWeight: 500, fontFamily: FONT };
 const btnSmallTeal = { padding: '5px 13px', borderRadius: 6, border: 'none', background: C.teal, color: C.white, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT };

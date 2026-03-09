@@ -140,6 +140,7 @@ const CategoryBadge = ({ category, small }) => {
 
 const EditableField = ({ label, value, field, onSave, type = 'text', options, multiOptions, placeholder }) => {
   const [editing, setEditing] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [val, setVal] = useState(value || '');
   const [selectedMulti, setSelectedMulti] = useState(() => {
     try { return JSON.parse(value || '[]'); } catch { return []; }
@@ -161,12 +162,11 @@ const EditableField = ({ label, value, field, onSave, type = 'text', options, mu
       try { const arr = JSON.parse(value || '[]'); displayVal = arr.length > 0 ? arr.join(', ') : '—'; } catch { displayVal = value || '—'; }
     }
     return (
-      <div style={{ marginBottom: 2 }}>
-        <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT }}>
-          {label}
-          <span onClick={() => setEditing(true)} style={{ cursor: 'pointer', fontSize: 9, color: C.teal, opacity: 0.6 }} title="Edit">✎</span>
+      <div style={{ marginBottom: 2, cursor: 'pointer', padding: '6px 8px', borderRadius: 8, transition: 'background 0.15s', background: hovered ? `${C.orange}06` : 'transparent' }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={() => setEditing(true)}>
+        <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FONT, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label} {hovered && <span style={{ fontSize: 9, color: C.orange, opacity: 0.6 }}>✎</span>}
         </div>
-        <div style={{ fontSize: 13, color: C.dark, fontWeight: 500, lineHeight: 1.5, wordBreak: 'break-word', fontFamily: FONT }}>{displayVal}</div>
+        <div style={{ fontSize: 14, color: displayVal === '—' ? C.slateLight : C.dark, fontWeight: 500, lineHeight: 1.5, wordBreak: 'break-word', fontFamily: FONT }}>{displayVal}</div>
       </div>
     );
   }
@@ -308,17 +308,26 @@ function CRMApp({ user, onLogout }) {
     return () => clearInterval(iv);
   }, [fetchData, view]);
 
-  // Browser back button handler — stay inside CRM
+  // Browser back button — keep user inside CRM
+  const viewRef = React.useRef(view);
+  useEffect(() => { viewRef.current = view; }, [view]);
   useEffect(() => {
-    const handlePopState = (e) => {
-      e.preventDefault();
-      if (view === 'detail') { setView('leads'); }
-      else if (view !== 'dashboard') { setView('dashboard'); }
-      window.history.pushState(null, '', window.location.href);
+    // Replace current entry and push a guard state
+    window.history.replaceState({ crm: true, view: 'dashboard' }, '');
+    window.history.pushState({ crm: true, view: 'dashboard' }, '');
+    const handlePop = (e) => {
+      const v = viewRef.current;
+      if (v === 'detail') { setView('leads'); }
+      else if (v !== 'dashboard') { setView('dashboard'); }
+      // Re-push so back button always stays in CRM
+      window.history.pushState({ crm: true, view: v }, '');
     };
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+  // Push state on every view change
+  useEffect(() => {
+    window.history.pushState({ crm: true, view }, '');
   }, [view]);
 
   const updateLead = async (leadId, updates) => {
@@ -782,7 +791,7 @@ function CRMApp({ user, onLogout }) {
             <button onClick={(e) => { e.preventDefault(); setView('leads'); }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{lead.prefix} {lead.first_name} {lead.last_name}</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: -0.3 }}>{lead.prefix} {lead.first_name} {lead.last_name}</h2>
                 <CategoryBadge category={lead.lead_category} small />
               </div>
               <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{getFlag(lead.nationality)} {lead.nationality} · {lead.email} · {lead.isd} {lead.phone} · {lead.lead_id}</div>
@@ -802,58 +811,110 @@ function CRMApp({ user, onLogout }) {
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: `1px solid ${C.borderLight}`, background: C.cream }}>
           {tabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ padding: '9px 16px', fontSize: 11, fontWeight: activeTab === tab.key ? 700 : 500, color: activeTab === tab.key ? C.teal : C.slate, background: 'none', border: 'none', borderBottom: activeTab === tab.key ? `2px solid ${C.teal}` : '2px solid transparent', cursor: 'pointer', fontFamily: FONT }}>{tab.label}</button>
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ padding: '10px 18px', fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500, color: activeTab === tab.key ? C.orange : C.slate, background: activeTab === tab.key ? `${C.orange}06` : 'none', border: 'none', borderBottom: activeTab === tab.key ? `2.5px solid ${C.orange}` : '2.5px solid transparent', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.15s', borderRadius: '8px 8px 0 0' }}>{tab.label}</button>
           ))}
         </div>
 
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (
-            <div>
-              <SectionLabel>Enquirer</SectionLabel>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px 20px', marginBottom: 22 }}>
-                <EditableField label="Prefix" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
-                <EditableField label="First Name" value={lead.first_name} field="first_name" onSave={saveField} />
-                <EditableField label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} />
-                <EditableField label="Email" value={lead.email} field="email" onSave={saveField} type="email" />
-                <EditableField label="ISD" value={lead.isd} field="isd" onSave={saveField} />
-                <EditableField label="Phone" value={lead.phone} field="phone" onSave={saveField} />
-                <EditableField label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} />
-                <EditableField label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} />
-                <EditableField label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+              {/* Source & Tracking — TOP (critical for business) */}
+              <div style={{ background: `linear-gradient(135deg, ${C.blueBg}, ${C.cream})`, borderRadius: 12, border: `1px solid ${C.blue}15`, padding: '14px 18px', marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 14 }}>🔗</span> Lead Source & Tracking
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source Page</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.dark, wordBreak: 'break-all' }}>{lead.page_title || '—'}</div>
+                  </div>
+                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: lead.referrer ? C.blue : C.slateLight, wordBreak: 'break-all' }}>{lead.referrer ? <a href={lead.referrer} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'underline' }}>{lead.referrer.replace('https://','').replace('http://','').substring(0,35)}</a> : '—'}</div>
+                  </div>
+                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Lead ID</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: C.slateDark, fontFamily: 'monospace' }}>{lead.lead_id}</div>
+                  </div>
+                  <div style={{ padding: '8px 12px', background: C.white, borderRadius: 8, border: `1px solid ${C.borderLight}` }}>
+                    <div style={{ fontSize: 9, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Created</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: C.slateDark }}>{fmtDate(lead.created_at)}</div>
+                  </div>
+                </div>
               </div>
 
-              {lead.patient_relation !== 'self' && (<><SectionLabel>Patient Details</SectionLabel>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px 20px', marginBottom: 22 }}>
+              {/* Enquirer Card — name, phone, email grouped logically */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.orange, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 15 }}>👤</span> Enquirer
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
+                  <EditableField label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
+                  <EditableField label="First Name" value={lead.first_name} field="first_name" onSave={saveField} />
+                  <EditableField label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 1fr', gap: '4px 12px', marginBottom: 4 }}>
+                  <EditableField label="Email" value={lead.email} field="email" onSave={saveField} type="email" />
+                  <EditableField label="ISD Code" value={lead.isd} field="isd" onSave={saveField} />
+                  <EditableField label="Phone" value={lead.phone} field="phone" onSave={saveField} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px' }}>
+                  <EditableField label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} />
+                  <EditableField label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} />
+                  <EditableField label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} />
+                </div>
+              </div>
+
+              {/* Patient Details Card — only if not self */}
+              {lead.patient_relation !== 'self' && (
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.purple}12`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.purple, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 15 }}>🏥</span> Patient Details
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
                   <EditableField label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} />
-                  <EditableField label="Patient Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} />
+                  <EditableField label="Patient First Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} />
                   <EditableField label="Patient Last Name" value={lead.patient_last_name} field="patient_last_name" onSave={saveField} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '4px 12px' }}>
                   <EditableField label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} />
                   <EditableField label="Patient Email" value={lead.patient_email} field="patient_email" onSave={saveField} type="email" />
                   <EditableField label="Patient Phone" value={lead.patient_phone} field="patient_phone" onSave={saveField} />
-                </div></>)}
+                </div>
+              </div>)}
 
-              <SectionLabel>Inquiry</SectionLabel>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px 20px', marginBottom: 22 }}>
-                <EditableField label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} />
-                <EditableField label="Treatment" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} />
-                <EditableField label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} />
+              {/* Inquiry Card — message prominent */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 15 }}>💬</span> Inquiry Details
+                </div>
+                {lead.message && <div style={{ background: `${C.amberBg}`, border: `1px solid #fde68a`, borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
+                  <div style={{ fontSize: 9, color: '#92400e', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Patient Message</div>
+                  <div style={{ fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.6 }}>{lead.message}</div>
+                </div>}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 8 }}>
+                  <EditableField label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} />
+                  <EditableField label="Treatment" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} />
+                  <EditableField label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} />
+                </div>
+                <EditableField label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add clinical notes, observations..." />
               </div>
-              <EditableField label="Message" value={lead.message} field="message" onSave={saveField} type="textarea" />
-              <div style={{ marginTop: 10 }}><EditableField label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" /></div>
 
-              <SectionLabel style={{ marginTop: 20 }}>Travel & Billing</SectionLabel>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px 20px' }}>
-                <EditableField label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" />
-                <EditableField label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" />
-                <EditableField label="Billing Amount" value={lead.billing_amount} field="billing_amount" onSave={saveField} type="number" />
-                <EditableField label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP']} />
-                <EditableField label="Billing Status" value={lead.billing_status} field="billing_status" onSave={saveField} options={['Pending','Estimate Sent','Deposit Received','Fully Paid','Refund Processed']} />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, fontSize: 10, color: C.slateLight, background: C.cream, padding: 12, borderRadius: 8, marginTop: 18 }}>
-                <div><b>ID:</b> {lead.lead_id}</div>
-                <div><b>Source:</b> {lead.referrer || '—'}</div>
-                <div><b>Created:</b> {fmtDate(lead.created_at)}</div>
+              {/* Travel & Billing Card */}
+              <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.green}12`, padding: '18px 20px', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 15 }}>✈️</span> Travel & Billing
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 12px', marginBottom: 4 }}>
+                  <EditableField label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" />
+                  <EditableField label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" />
+                  <EditableField label="Billing Amount" value={lead.billing_amount} field="billing_amount" onSave={saveField} type="number" />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
+                  <EditableField label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP','SAR','QAR','KWD','BHD','OMR']} />
+                  <EditableField label="Billing Status" value={lead.billing_status} field="billing_status" onSave={saveField} options={['Pending','Estimate Sent','Deposit Received','Fully Paid','Refund Processed']} />
+                </div>
               </div>
             </div>
           )}

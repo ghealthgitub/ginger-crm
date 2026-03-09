@@ -425,7 +425,7 @@ function CRMApp({ user, onLogout }) {
       <div>
         <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, borderRadius: 12, padding: '20px 24px', marginBottom: 18, color: C.white }}>
           <div style={{ fontSize: 18, fontWeight: 700, fontFamily: FONT }}>{greeting}, {user.name}!</div>
-          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{ROLE_LABELS[user.role]} \u00b7 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{ROLE_LABELS[user.role]} · {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12, marginBottom: 18 }}>
@@ -459,10 +459,10 @@ function CRMApp({ user, onLogout }) {
 
         {followUps.length > 0 && (
           <div style={{ background: `linear-gradient(135deg, ${C.amberBg}, #fef3c7)`, border: `1px solid #fbbf24`, borderRadius: 10, padding: 14, marginBottom: 18 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, fontFamily: FONT }}>\u23f0 Follow-Ups Due ({followUps.length})</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, fontFamily: FONT }}>⏰ Follow-Ups Due ({followUps.length})</div>
             {followUps.slice(0, 5).map(l => (
               <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid #fde68a', cursor: 'pointer' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 10, color: C.slate, fontWeight: 400 }}>\u00b7 {l.nationality}</span></span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, fontFamily: FONT }}>{l.first_name} {l.last_name} <span style={{ fontSize: 10, color: C.slate, fontWeight: 400 }}>· {l.nationality}</span></span>
                 <span style={{ fontSize: 10, color: '#92400e' }}>{l.follow_up_note?.substring(0, 30) || 'Follow up'}</span>
               </div>
             ))}
@@ -490,7 +490,7 @@ function CRMApp({ user, onLogout }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>{isAdminOrManager ? 'Recent Leads' : 'My Recent Leads'}</div>
             {leads.filter(l => l.lead_category === 'patient' || !l.lead_category).slice(0, 6).map(l => (
               <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
-                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.nationality} \u00b7 {l.treatment_sought || l.service_type || '\u2014'}</div></div>
+                <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{l.nationality} · {l.treatment_sought || l.service_type || '—'}</div></div>
                 <div style={{ textAlign: 'right' }}><StatusBadge status={l.status} small /><div style={{ fontSize: 9, color: C.slateLight, marginTop: 1 }}>{timeAgo(l.created_at)}</div></div>
               </div>
             ))}

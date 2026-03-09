@@ -42,6 +42,17 @@ export const usersApi = {
   reactivate: (id) => api(`/auth/users/${id}/reactivate`, { method: 'POST' }),
 };
 
+export const schedulesApi = {
+  list: () => api('/auth/schedules'),
+  forUser: (userId) => api(`/auth/schedules/user/${userId}`),
+  create: (data) => api('/auth/schedules', { method: 'POST', body: JSON.stringify(data) }),
+  bulkSet: (user_id, schedules) => api('/auth/schedules/bulk', { method: 'POST', body: JSON.stringify({ user_id, schedules }) }),
+  remove: (id) => api(`/auth/schedules/${id}`, { method: 'DELETE' }),
+  overrides: () => api('/auth/schedule-overrides'),
+  addOverride: (data) => api('/auth/schedule-overrides', { method: 'POST', body: JSON.stringify(data) }),
+  removeOverride: (id) => api(`/auth/schedule-overrides/${id}`, { method: 'DELETE' }),
+};
+
 export const leadsApi = {
   list: (params = {}) => {
     const clean = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
@@ -55,6 +66,10 @@ export const leadsApi = {
   performance: () => api('/leads/stats/performance'),
   followUps: () => api('/leads/follow-ups/due'),
   exportCSV: () => api('/leads/export/csv', { raw: true }).then(r => r?.blob()),
+  addFollowUp: (leadId, data) => api(`/leads/${leadId}/follow-ups`, { method: 'POST', body: JSON.stringify(data) }),
+  updateFollowUp: (leadId, fuId, data) => api(`/leads/${leadId}/follow-ups/${fuId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  addAttachment: (leadId, data) => api(`/leads/${leadId}/attachments`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteAttachment: (leadId, attId) => api(`/leads/${leadId}/attachments/${attId}`, { method: 'DELETE' }),
 };
 
 export default api;

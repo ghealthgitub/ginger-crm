@@ -5,19 +5,20 @@ import { authApi, leadsApi, usersApi, schedulesApi } from './utils/api';
 // BRAND & DESIGN SYSTEM
 // ============================================================
 const C = {
-  navy: '#0a1628', navyLight: '#132038', navyMid: '#1a2d4a',
-  teal: '#0ea5a0', tealLight: '#14b8b3', tealDark: '#0d8f8a', tealBg: '#0ea5a008',
-  orange: '#ff6b2b', orangeLight: '#ff8650', orangeBg: '#ff6b2b08',
-  white: '#ffffff', offWhite: '#f7f8fb', cream: '#fafbfe',
-  slate: '#64748b', slateLight: '#94a3b8', slateDark: '#475569',
-  dark: '#0f172a', darkSoft: '#1e293b',
-  border: '#e8ecf2', borderLight: '#f0f3f8',
-  green: '#10b981', greenBg: '#ecfdf5',
+  // Ginger brand — navy + orange + warm palette
+  navy: '#00315a', navyLight: '#0a4175', navyMid: '#0d4e8a',
+  teal: '#ff6308', tealLight: '#ff7b30', tealDark: '#e55600', tealBg: '#ff630806',
+  orange: '#ff6308', orangeLight: '#ff8a40', orangeBg: '#fff4ed',
+  white: '#ffffff', offWhite: '#f8f9fc', cream: '#fdfaf7',
+  slate: '#5a6a7e', slateLight: '#8896a7', slateDark: '#3d4f63',
+  dark: '#0f1c2e', darkSoft: '#1a2b40',
+  border: '#e6e9f0', borderLight: '#f2f3f7',
+  green: '#22c55e', greenBg: '#f0fdf4',
   red: '#ef4444', redBg: '#fef2f2',
   amber: '#f59e0b', amberBg: '#fffbeb',
-  purple: '#8b5cf6', purpleBg: '#f5f3ff',
-  blue: '#3b82f6', blueBg: '#eff6ff',
-  cyan: '#06b6d4', cyanBg: '#ecfeff',
+  purple: '#7c3aed', purpleBg: '#f5f3ff',
+  blue: '#2563eb', blueBg: '#eff6ff',
+  cyan: '#0891b2', cyanBg: '#ecfeff',
 };
 
 const FONT = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -236,7 +237,7 @@ function LoginScreen({ onLogin }) {
           <label style={labelStyle}>Password</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" style={inputStyle} />
         </div>
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: 0.3, fontFamily: FONT }}>
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${C.orange}, ${C.tealDark})`, color: C.white, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: 0.3, fontFamily: FONT, boxShadow: `0 4px 16px ${C.orange}35`, transition: 'transform 0.15s, box-shadow 0.15s' }} onMouseDown={e => e.target.style.transform = 'scale(0.98)'} onMouseUp={e => e.target.style.transform = 'scale(1)'}>
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
@@ -423,23 +424,30 @@ function CRMApp({ user, onLogout }) {
 
     return (
       <div>
-        <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, borderRadius: 12, padding: '20px 24px', marginBottom: 18, color: C.white }}>
-          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: FONT }}>{greeting}, {user.name}!</div>
+        <div style={{ background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 60%, #1a3a5c 100%)`, borderRadius: 14, padding: '22px 26px', marginBottom: 20, color: C.white, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: '50%', background: `${C.orange}12` }} />
+          <div style={{ position: 'absolute', bottom: -30, right: 60, width: 80, height: 80, borderRadius: '50%', background: `${C.orange}08` }} />
+          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: FONT, position: 'relative' }}>{greeting}, {user.name}!</div>
           <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{ROLE_LABELS[user.role]} · {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12, marginBottom: 18 }}>
           {[
-            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal },
-            { label: 'New Today', value: stats.today, color: C.green },
-            { label: 'Urgent', value: stats.urgent, color: C.red },
-            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange },
-            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple },
+            { label: isAdminOrManager ? 'Total Patients' : 'My Patients', value: stats.total, color: C.teal, icon: '🏥', action: () => { setActiveCategory('patient'); setView('leads'); } },
+            { label: 'New Today', value: stats.today, color: C.green, icon: '🆕', action: () => { setFilterStatus('new'); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Urgent', value: stats.urgent, color: C.red, icon: '🚨', action: () => { setFilterUrgency('Urgent'); setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Follow-Ups Due', value: stats.followUpDue, color: C.orange, icon: '⏰', action: () => { setActiveCategory('patient'); setView('leads'); } },
+            { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: C.purple, icon: '📈', action: () => { setView('analytics'); } },
           ].map((s, i) => (
-            <div key={i} style={{ background: C.white, borderRadius: 10, padding: '14px 16px', border: `1px solid ${C.borderLight}`, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: s.color }} />
-              <div style={{ fontSize: 9.5, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3, fontFamily: FONT }}>{s.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
+            <div key={i} onClick={s.action} style={{ background: `linear-gradient(135deg, ${C.white}, ${s.color}04)`, borderRadius: 14, padding: '16px 18px', border: `1px solid ${s.color}18`, position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${s.color}15`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: `linear-gradient(180deg, ${s.color}, ${s.color}80)`, borderRadius: '14px 0 0 14px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: 9.5, color: C.slate, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4, fontFamily: FONT }}>{s.label}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: C.dark, fontFamily: FONT }}>{s.value}</div>
+                </div>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{s.icon}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -447,7 +455,7 @@ function CRMApp({ user, onLogout }) {
         {isAdminOrManager && stats.byCategory && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 18 }}>
             {CATEGORIES.map(cat => (
-              <div key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }} style={{ background: C.white, borderRadius: 10, padding: '12px 14px', border: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
+              <div key={cat.key} onClick={() => { setActiveCategory(cat.key); setView('leads'); }} style={{ background: `linear-gradient(135deg, ${C.white}, ${cat.color}05)`, borderRadius: 12, padding: '14px 16px', border: `1.5px solid ${cat.color}15`, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${cat.color}12`; e.currentTarget.style.borderColor = cat.color + '30'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = cat.color + '15'; }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div><div style={{ fontSize: 15 }}>{cat.icon}</div><div style={{ fontSize: 11, fontWeight: 600, color: C.dark, marginTop: 2, fontFamily: FONT }}>{cat.label}</div><div style={{ fontSize: 9, color: C.slateLight }}>{cat.desc}</div></div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: cat.color, fontFamily: FONT }}>{stats.byCategory[cat.key] || 0}</div>
@@ -476,7 +484,7 @@ function CRMApp({ user, onLogout }) {
               const count = stats.byStatus[s.key] || 0;
               const pct = stats.total > 0 ? (count / stats.total * 100) : 0;
               return (
-                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <div key={s.key} onClick={() => { setFilterStatus(s.key); setActiveCategory('patient'); setView('leads'); }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, cursor: 'pointer', padding: '2px 0', borderRadius: 4, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: 10, width: 70, textAlign: 'right', color: C.slate, fontFamily: FONT }}>{s.label}</span>
                   <div style={{ flex: 1, height: 16, background: C.offWhite, borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 4, minWidth: count > 0 ? 16 : 0, transition: 'width 0.4s' }} />
@@ -507,7 +515,7 @@ function CRMApp({ user, onLogout }) {
                 const rate = p.total > 0 ? Math.round((parseInt(p.converted) / parseInt(p.total)) * 100) : 0;
                 const c = colors[i % colors.length];
                 return (
-                  <div key={p.assigned_counselor} style={{ padding: 12, background: `${c}05`, borderRadius: 8, border: `1px solid ${c}10` }}>
+                  <div key={p.assigned_counselor} onClick={() => { setFilterCounselor(p.assigned_counselor); setActiveCategory('patient'); setView('leads'); }} style={{ padding: 14, background: `linear-gradient(145deg, ${C.white}, ${c}06)`, borderRadius: 12, border: `1px solid ${c}15`, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c}12`; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                       <div style={{ width: 28, height: 28, borderRadius: 7, background: `${c}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: c }}>{p.assigned_counselor?.charAt(0)}</div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{p.assigned_counselor}</div>

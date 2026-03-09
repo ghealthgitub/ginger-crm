@@ -283,7 +283,13 @@ function CRMApp({ user, onLogout }) {
     setLoading(false);
   }, [filterStatus, filterCounselor, filterUrgency, search, isAdminOrManager, activeCategory]);
 
-  useEffect(() => { fetchData(); const iv = setInterval(fetchData, 30000); return () => clearInterval(iv); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+    // Don't auto-refresh on scheduling/settings pages — it resets local form state
+    if (view === 'scheduling' || view === 'settings') return;
+    const iv = setInterval(fetchData, 30000);
+    return () => clearInterval(iv);
+  }, [fetchData, view]);
 
   const updateLead = async (leadId, updates) => {
     try {

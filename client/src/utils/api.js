@@ -79,6 +79,7 @@ export const contactsApi = {
     return api(`/contacts${qs ? '?' + qs : ''}`);
   },
   get: (contactId) => api(`/contacts/${contactId}`),
+  create: (data) => api('/contacts', { method: 'POST', body: JSON.stringify(data) }),
   update: (contactId, data) => api(`/contacts/${contactId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   stats: () => api('/contacts/stats'),
   createLead: (contactId, data = {}) => api(`/contacts/${contactId}/create-lead`, { method: 'POST', body: JSON.stringify(data) }),

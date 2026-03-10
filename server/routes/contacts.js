@@ -97,6 +97,46 @@ router.get('/stats', auth, async (req, res) => {
 });
 
 // ============================================================
+// CREATE CONTACT (manual entry)
+// ============================================================
+router.post('/', auth, async (req, res) => {
+  try {
+    const d = req.body;
+    if (!d.first_name || !d.last_name) return res.status(400).json({ error: 'First name and last name are required' });
+
+    const contactId = `C${Date.now()}${Math.random().toString(36).substring(2, 6)}`;
+
+    const result = await pool.query(`
+      INSERT INTO contacts (
+        contact_id, prefix, first_name, last_name, email, isd, phone,
+        nationality, contact_type, relationship_type, contact_preference,
+        assigned_counselor, notes
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      RETURNING *
+    `, [
+      contactId,
+      d.prefix || null,
+      d.first_name,
+      d.last_name,
+      d.email || null,
+      d.isd || null,
+      d.phone || null,
+      d.nationality || null,
+      d.contact_type || 'patient',
+      d.relationship_type || null,
+      d.contact_preference || null,
+      d.assigned_counselor || req.user.name,
+      d.notes || null,
+    ]);
+
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error('Create contact error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============================================================
 // GET SINGLE CONTACT + associated leads
 // ============================================================
 router.get('/:contactId', auth, async (req, res) => {

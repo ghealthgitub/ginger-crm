@@ -673,13 +673,13 @@ function CRMApp({ user, onLogout }) {
       <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selStyle}><option value="all">All Status</option>{STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
       {isAdminOrManager && <select value={filterCounselor} onChange={e => setFilterCounselor(e.target.value)} style={selStyle}><option value="all">All Counselors</option>{counselors.map(c => <option key={c} value={c}>{c}</option>)}</select>}
       <select value={filterUrgency} onChange={e => setFilterUrgency(e.target.value)} style={selStyle}><option value="all">All Urgency</option><option>Emergency</option><option>Urgent</option><option>Semi-Urgent</option><option>Routine</option></select>
-      <select value={`${leadSort}_${leadOrder}`} onChange={e => { const [s, o] = e.target.value.split('_'); setLeadSort(s); setLeadOrder(o); }} style={selStyle}>
-        <option value="created_at_desc">Newest First</option>
-        <option value="created_at_asc">Oldest First</option>
-        <option value="first_name_asc">Name A–Z</option>
-        <option value="first_name_desc">Name Z–A</option>
-        <option value="updated_at_desc">Recently Updated</option>
-        <option value="nationality_asc">Country A–Z</option>
+      <select value={`${leadSort}|${leadOrder}`} onChange={e => { const parts = e.target.value.split('|'); setLeadSort(parts[0]); setLeadOrder(parts[1]); }} style={selStyle}>
+        <option value="created_at|desc">Newest First</option>
+        <option value="created_at|asc">Oldest First</option>
+        <option value="first_name|asc">Name A–Z</option>
+        <option value="first_name|desc">Name Z–A</option>
+        <option value="updated_at|desc">Recently Updated</option>
+        <option value="nationality|asc">Country A–Z</option>
       </select>
       <div style={{ position: 'relative' }}>
         <button onClick={() => setShowColPicker(!showColPicker)} style={{ ...btnTopbar, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>⚙ Columns</button>
@@ -1416,7 +1416,24 @@ function CRMApp({ user, onLogout }) {
     try { const full = await contactsApi.get(contact.contact_id); setSelectedContact(full); setView('contact_detail'); } catch (e) { console.error(e); }
   };
 
-  const ContactsList = () => (
+  const ContactsList = () => {
+    const [showAdd, setShowAdd] = useState(false);
+    const [newContact, setNewContact] = useState({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', notes: '' });
+    const [saving, setSaving] = useState(false);
+
+    const handleAddContact = async () => {
+      if (!newContact.first_name || !newContact.last_name) return;
+      setSaving(true);
+      try {
+        await contactsApi.create(newContact);
+        setShowAdd(false);
+        setNewContact({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', notes: '' });
+        fetchContacts();
+      } catch (e) { console.error('Create contact failed:', e); }
+      setSaving(false);
+    };
+
+    return (
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', fontFamily: FONT }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '8px 14px', flex: '1 1 280px', maxWidth: 380 }}>
@@ -1424,15 +1441,42 @@ function CRMApp({ user, onLogout }) {
           <input value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search contacts..." style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
           {contactSearch && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 12 }} onClick={() => setContactSearch('')}>✕</span>}
         </div>
-        <select value={`${contactSort}_${contactOrder}`} onChange={e => { const [s, o] = e.target.value.split('_'); setContactSort(s); setContactOrder(o); }} style={selStyle}>
-          <option value="created_at_desc">Newest First</option>
-          <option value="created_at_asc">Oldest First</option>
-          <option value="first_name_asc">Name A–Z</option>
-          <option value="first_name_desc">Name Z–A</option>
-          <option value="updated_at_desc">Recently Updated</option>
+        <select value={`${contactSort}|${contactOrder}`} onChange={e => { const parts = e.target.value.split('|'); setContactSort(parts[0]); setContactOrder(parts[1]); }} style={selStyle}>
+          <option value="created_at|desc">Newest First</option>
+          <option value="created_at|asc">Oldest First</option>
+          <option value="first_name|asc">Name A–Z</option>
+          <option value="first_name|desc">Name Z–A</option>
+          <option value="updated_at|desc">Recently Updated</option>
         </select>
+        <button onClick={() => setShowAdd(!showAdd)} style={btnSmallTeal}>+ Add Contact</button>
         <div style={{ marginLeft: 'auto', fontSize: 12, color: C.slate, fontWeight: 500 }}>{contactsTotal} contacts</div>
       </div>
+
+      {showAdd && (
+        <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, padding: '16px 20px', marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.dark, marginBottom: 12, fontFamily: FONT }}>Add New Contact</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div><label style={lblSm}>Title</label><select value={newContact.prefix} onChange={e => setNewContact({...newContact, prefix: e.target.value})} style={inputSmall}><option value="">—</option><option>Mr.</option><option>Mrs.</option><option>Ms.</option><option>Dr.</option></select></div>
+            <div><label style={lblSm}>First Name *</label><input value={newContact.first_name} onChange={e => setNewContact({...newContact, first_name: e.target.value})} placeholder="First name" style={inputSmall} /></div>
+            <div><label style={lblSm}>Last Name *</label><input value={newContact.last_name} onChange={e => setNewContact({...newContact, last_name: e.target.value})} placeholder="Last name" style={inputSmall} /></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr', gap: 8, marginBottom: 8 }}>
+            <div><label style={lblSm}>Email</label><input value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} placeholder="email@example.com" style={inputSmall} type="email" /></div>
+            <div><label style={lblSm}>ISD</label><input value={newContact.isd} onChange={e => setNewContact({...newContact, isd: e.target.value})} placeholder="+1" style={inputSmall} /></div>
+            <div><label style={lblSm}>Phone</label><input value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="Phone number" style={inputSmall} /></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div><label style={lblSm}>Nationality</label><select value={newContact.nationality} onChange={e => setNewContact({...newContact, nationality: e.target.value})} style={inputSmall}><option value="">Select country</option>{COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+            <div><label style={lblSm}>Contact Via</label><select value={newContact.contact_preference} onChange={e => setNewContact({...newContact, contact_preference: e.target.value})} style={inputSmall}><option value="">—</option><option value="whatsapp">WhatsApp</option><option value="phone">Phone</option><option value="email">Email</option><option value="telegram">Telegram</option></select></div>
+          </div>
+          <div style={{ marginBottom: 10 }}><label style={lblSm}>Notes</label><textarea value={newContact.notes} onChange={e => setNewContact({...newContact, notes: e.target.value})} placeholder="How did they reach out? Any context..." style={{ ...inputSmall, minHeight: 50, resize: 'vertical' }} /></div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={handleAddContact} disabled={saving || !newContact.first_name || !newContact.last_name} style={{ ...btnSmallTeal, opacity: (saving || !newContact.first_name || !newContact.last_name) ? 0.5 : 1 }}>{saving ? 'Saving...' : 'Save Contact'}</button>
+            <button onClick={() => setShowAdd(false)} style={btnSmallGhost}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT }}>
           <thead><tr style={{ background: C.offWhite }}>
@@ -1482,6 +1526,7 @@ function CRMApp({ user, onLogout }) {
       </div>
     </div>
   );
+  };
 
   // ---- CONTACT DETAIL ----
   const ContactDetail = () => {

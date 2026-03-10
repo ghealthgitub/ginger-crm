@@ -148,6 +148,7 @@ async function initDB() {
       "hospital_reg_number VARCHAR(50)", "date_first_consultation DATE",
       "admitting_doctor VARCHAR(200)", "date_admission DATE", "date_discharge DATE",
       "final_bill DECIMAL(12,2)", "contact_id VARCHAR(50)",
+      "latest_status TEXT",
     ];
     for (const col of leadCols) {
       await client.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS ${col}`);

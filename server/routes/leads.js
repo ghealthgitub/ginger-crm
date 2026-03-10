@@ -608,6 +608,7 @@ router.patch('/:leadId', auth, async (req, res) => {
       'recommended_hospitals_text', 'recommended_doctors_text',
       'passport_number', 'visa_number', 'hospital_reg_number',
       'date_first_consultation', 'admitting_doctor', 'date_admission', 'date_discharge', 'final_bill',
+      'latest_status',
     ];
     const updates = [];
     const params = [];

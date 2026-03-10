@@ -76,6 +76,7 @@ const STAGES = [
   { key: 'closed_won', label: 'Closed Won', color: '#10b981' },
   { key: 'cold', label: 'Cold Cases', color: C.slateLight },
   { key: 'drop', label: 'Drop', color: C.slate },
+  { key: 'follow_up', label: 'Follow-Up', color: C.cyan },
 ];
 
 const SERVICES_OPTIONS = [
@@ -213,10 +214,10 @@ const EF = ({ label, value, field, onSave, type = 'text', options, multiOptions,
     </div>
   );
   return (
-    <div onClick={() => setEditing(true)} style={{ padding: '7px 12px', cursor: 'pointer', borderRadius: 4, transition: 'background 0.1s', minHeight: 34 }}
-      onMouseEnter={e => e.currentTarget.style.background = `${C.orange}05`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-      <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4, fontFamily: FONT, marginBottom: 1 }}>{label}</div>
-      <div style={{ fontSize: type === 'textarea' ? 13 : 14, color: empty ? '#c0c8d4' : C.dark, fontWeight: empty ? 400 : 500, fontFamily: FONT, lineHeight: 1.5, wordBreak: 'break-word' }}>{dv}</div>
+    <div onClick={() => setEditing(true)} style={{ padding: '8px 14px', cursor: 'pointer', borderRadius: 4, transition: 'background 0.1s', minHeight: 36 }}
+      onMouseEnter={e => e.currentTarget.style.background = `${C.orange}06`} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+      <div style={{ fontSize: 10.5, color: C.slate, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: FONT, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: type === 'textarea' ? 13.5 : 14.5, color: empty ? '#b0b8c4' : '#1a1a2e', fontWeight: empty ? 400 : 600, fontFamily: FONT, lineHeight: 1.5, wordBreak: 'break-word' }}>{dv}</div>
     </div>
   );
 };
@@ -584,7 +585,7 @@ function CRMApp({ user, onLogout }) {
               return (
                 <div key={s.key} onClick={() => { setFilterUrgency('all'); setFilterCounselor('all'); setSearch(''); setFilterStatus(s.key); setActiveCategory('patient'); setView('leads'); }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, cursor: 'pointer', padding: '2px 0', borderRadius: 4, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: 10, width: 70, textAlign: 'right', color: C.slate, fontFamily: FONT }}>{s.label}</span>
-                  <div style={{ flex: 1, height: 16, background: C.offWhite, borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 16, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 4, minWidth: count > 0 ? 16 : 0, transition: 'width 0.4s' }} />
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, width: 22, color: s.color, fontFamily: FONT }}>{count}</span>
@@ -595,7 +596,7 @@ function CRMApp({ user, onLogout }) {
           <div style={{ background: C.white, borderRadius: 10, padding: 16, border: `1px solid ${C.borderLight}` }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 10, fontFamily: FONT }}>{isAdminOrManager ? 'Recent Leads' : 'My Recent Leads'}</div>
             {leads.filter(l => l.lead_category === 'patient' || !l.lead_category).slice(0, 6).map(l => (
-              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer' }}>
+              <div key={l.lead_id} onClick={() => openDetail(l)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid #e5e7eb', cursor: 'pointer' }}>
                 <div><div style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{l.first_name} {l.last_name}</div><div style={{ fontSize: 10, color: C.slateLight }}>{getFlag(l.nationality)} {l.nationality} · {l.treatment_sought || l.service_type || '—'}</div></div>
                 <div style={{ textAlign: 'right' }}><StatusBadge status={l.status} small /><div style={{ fontSize: 9, color: C.slateLight, marginTop: 1 }}>{timeAgo(l.created_at)}</div></div>
               </div>
@@ -724,7 +725,7 @@ function CRMApp({ user, onLogout }) {
           </tr></thead>
           <tbody>
             {leads.map((l, idx) => (
-              <tr key={l.lead_id} onClick={() => openDetail(l)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.borderLight}`, background: idx % 2 === 0 ? C.white : `${C.cream}80`, transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = `${C.orange}06`; e.currentTarget.style.transform = 'scale(1.002)'; }} onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.white : `${C.cream}80`; e.currentTarget.style.transform = 'scale(1)'; }}>
+              <tr key={l.lead_id} onClick={() => openDetail(l)} style={{ cursor: 'pointer', borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? C.white : `${C.cream}80`, transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = `${C.orange}06`; e.currentTarget.style.transform = 'scale(1.002)'; }} onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.white : `${C.cream}80`; e.currentTarget.style.transform = 'scale(1)'; }}>
                 {visibleCols.includes('lead') && <td style={tdV}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <PriorityDot priority={l.priority} />
@@ -774,22 +775,23 @@ function CRMApp({ user, onLogout }) {
     <div>
       <Toolbar />
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10 }}>
-        {STATUSES.filter(s => s.key !== 'lost').map(status => {
-          const col = leads.filter(l => l.status === status.key);
+        {STAGES.map(stage => {
+          const col = leads.filter(l => (l.stage || 'new') === stage.key);
           return (
-            <div key={status.key} style={{ flex: '1 1 0', minWidth: 200, background: `linear-gradient(180deg, ${C.cream}, ${C.white})`, borderRadius: 12, padding: 10, fontFamily: FONT, border: `1px solid ${C.borderLight}` }}>
+            <div key={stage.key} style={{ flex: '1 1 0', minWidth: 180, background: C.white, borderRadius: 12, padding: 10, fontFamily: FONT, border: `1px solid ${C.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, padding: '0 4px' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: status.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{status.label}</span>
-                <span style={{ fontSize: 10, background: status.bg, color: status.color, padding: '1px 7px', borderRadius: 8, fontWeight: 700 }}>{col.length}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: stage.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{stage.label}</span>
+                <span style={{ fontSize: 10, background: `${stage.color}15`, color: stage.color, padding: '1px 7px', borderRadius: 8, fontWeight: 700 }}>{col.length}</span>
               </div>
               {col.map(l => (
-                <div key={l.lead_id} onClick={() => openDetail(l)} style={{ background: C.white, borderRadius: 10, padding: '11px 13px', border: `1px solid ${C.borderLight}`, cursor: 'pointer', marginBottom: 8, transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, letterSpacing: -0.2 }}>{l.first_name} {l.last_name}</span><PriorityDot priority={l.priority} /></div>
-                  <div style={{ fontSize: 10, color: C.slateLight, marginTop: 2 }}>{getFlag(l.nationality)} {l.nationality}</div>
-                  <div style={{ fontSize: 11, color: C.slateDark, marginTop: 2, fontWeight: 500 }}>{l.treatment_sought || l.service_type}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 5, borderTop: `1px solid ${C.borderLight}`, fontSize: 9, color: C.slateLight }}><span>{l.assigned_counselor}</span><span>{timeAgo(l.created_at)}</span></div>
+                <div key={l.lead_id} onClick={() => openDetail(l)} style={{ background: '#f3f4f6', borderRadius: 10, padding: '11px 13px', border: `1px solid ${C.border}`, cursor: 'pointer', marginBottom: 8, transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 700, color: C.dark, letterSpacing: -0.2 }}>{l.first_name} {l.last_name}</span><PriorityDot priority={l.priority} /></div>
+                  <div style={{ fontSize: 10, color: C.slate, marginTop: 2 }}>{getFlag(l.nationality)} {l.nationality}</div>
+                  <div style={{ fontSize: 11, color: C.dark, marginTop: 2, fontWeight: 500 }}>{l.treatment_sought || l.service_type}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 5, borderTop: `1px solid ${C.border}`, fontSize: 9, color: C.slate }}><span>{l.assigned_counselor}</span><span>{timeAgo(l.created_at)}</span></div>
                 </div>
               ))}
+              {col.length === 0 && <div style={{ padding: 16, textAlign: 'center', fontSize: 11, color: C.slateLight }}>—</div>}
             </div>
           );
         })}
@@ -854,7 +856,7 @@ function CRMApp({ user, onLogout }) {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: `1px solid ${C.borderLight}`, background: C.cream }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', background: C.cream }}>
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ padding: '10px 18px', fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500, color: activeTab === tab.key ? C.orange : C.slate, background: activeTab === tab.key ? `${C.orange}06` : 'none', border: 'none', borderBottom: activeTab === tab.key ? `2.5px solid ${C.orange}` : '2.5px solid transparent', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.15s', borderRadius: '8px 8px 0 0' }}>{tab.label}</button>
           ))}
@@ -863,11 +865,11 @@ function CRMApp({ user, onLogout }) {
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (<>
             {/* Lead Source */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🔗</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Lead Source</span></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, fontWeight: 600 }}>{lead.page_url ? <a href={cleanUrl(lead.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none', borderBottom: `1px dashed ${C.blue}40` }}>{lead.page_title || 'View Page'}</a> : <span style={{ color: C.dark }}>{lead.page_title || '—'}</span>}</div></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🔗</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Lead Source</span></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, fontWeight: 600 }}>{lead.page_url ? <a href={cleanUrl(lead.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none', borderBottom: `1px dashed ${C.blue}40` }}>{lead.page_title || 'View Page'}</a> : <span style={{ color: C.dark }}>{lead.page_title || '—'}</span>}</div></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
               <div style={{ padding: '6px 14px', background: `${C.blue}03`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.slateLight }}><span>Enquiry: {fmtDate(lead.created_at)}</span><span style={{ fontFamily: 'monospace', fontSize: 10 }}>ID: {lead.lead_id}</span></div>
               {lead.contact_id && <div style={{ padding: '8px 14px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Linked Contact</div><span style={{ fontSize: 12, fontFamily: 'monospace', color: C.cyan }}>{lead.contact_id}</span></div>
@@ -876,39 +878,40 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Enquirer */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>👤</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Enquirer</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} /><EF label="First Name" value={lead.first_name} field="first_name" onSave={saveField} /><EF label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Email" value={lead.email} field="email" onSave={saveField} type="email" /><EF label="ISD" value={lead.isd} field="isd" onSave={saveField} /><EF label="Phone" value={lead.phone} field="phone" onSave={saveField} /></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>👤</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Enquirer</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} /><EF label="First Name" value={lead.first_name} field="first_name" onSave={saveField} /><EF label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Email" value={lead.email} field="email" onSave={saveField} type="email" /><EF label="ISD" value={lead.isd} field="isd" onSave={saveField} /><EF label="Phone" value={lead.phone} field="phone" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} /><EF label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} /><EF label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Self','Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} /></div>
             </div>
 
             {/* Initial Message */}
-            {lead.message && <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>💬</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Initial Message</span></div>
-              <div style={{ padding: '16px 20px', fontSize: 15, color: C.slateDark, fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', borderLeft: `4px solid ${C.orange}`, background: C.offWhite }}>"{lead.message}"</div>
+            {lead.message && <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>💬</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Initial Message</span></div>
+              <div style={{ padding: '16px 20px', fontSize: 15, color: C.slateDark, fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', borderLeft: `4px solid ${C.orange}`, background: '#f3f4f6' }}>"{lead.message}"</div>
             </div>}
 
             {/* Patient Details */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🏥</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Patient Details</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Patient Name" value={lead.patient_name || ((lead.patient_first_name || '') + ' ' + (lead.patient_last_name || '')).trim() || null} field="patient_name" onSave={saveField} /><EF label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} /><EF label="Gender" value={lead.patient_gender} field="patient_gender" onSave={saveField} options={['Male','Female','Other']} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Nationality" value={lead.patient_nationality} field="patient_nationality" onSave={saveField} options={COUNTRY_LIST} /><EF label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} /></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." /></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🏥</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Patient Details</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Patient Name" value={lead.patient_name || ((lead.patient_first_name || '') + ' ' + (lead.patient_last_name || '')).trim() || null} field="patient_name" onSave={saveField} /><EF label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} /><EF label="Gender" value={lead.patient_gender} field="patient_gender" onSave={saveField} options={['Male','Female','Other']} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Nationality" value={lead.patient_nationality} field="patient_nationality" onSave={saveField} options={COUNTRY_LIST} /><EF label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} /></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}><EF label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." /></div>
               <div><EF label="Treatment Needed" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} /></div>
             </div>
 
             {/* Counselor Notes */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📝</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Counselor Notes</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Recommended Hospitals" value={lead.recommended_hospitals_text} field="recommended_hospitals_text" onSave={saveField} /><EF label="Recommended Doctors" value={lead.recommended_doctors_text} field="recommended_doctors_text" onSave={saveField} /></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Services Given" value={lead.services_given} field="services_given" onSave={saveField} multiOptions={SERVICES_OPTIONS} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}><EF label="Opportunity Size" value={lead.opportunity_size} field="opportunity_size" onSave={saveField} options={['Small','Medium','Large']} /><EF label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add observations..." /></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📝</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Counselor Notes</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Recommended Hospitals" value={lead.recommended_hospitals_text} field="recommended_hospitals_text" onSave={saveField} /><EF label="Recommended Doctors" value={lead.recommended_doctors_text} field="recommended_doctors_text" onSave={saveField} /></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}><EF label="Services Given" value={lead.services_given} field="services_given" onSave={saveField} multiOptions={SERVICES_OPTIONS} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Opportunity Size" value={lead.opportunity_size} field="opportunity_size" onSave={saveField} options={['Small','Medium','Large']} /><EF label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add observations..." /></div>
+              <div><EF label="Latest Status" value={lead.latest_status} field="latest_status" onSave={saveField} type="textarea" placeholder="Current status update..." /></div>
             </div>
 
             {/* Stage (Pipeline) */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📊</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Pipeline Stage</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📊</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Pipeline Stage</span></div>
               <div style={{ padding: '10px 14px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {STAGES.map(st => {
                   const active = (lead.stage || 'new') === st.key;
@@ -918,10 +921,10 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Mapping Details */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🗂️</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Mapping Details</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Passport Number" value={lead.passport_number} field="passport_number" onSave={saveField} /><EF label="Visa Number" value={lead.visa_number} field="visa_number" onSave={saveField} /><EF label="Hospital Reg No." value={lead.hospital_reg_number} field="hospital_reg_number" onSave={saveField} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Date of Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" /><EF label="Date of First Consultation" value={lead.date_first_consultation?.split('T')[0]} field="date_first_consultation" onSave={saveField} type="date" /><EF label="Admitting Doctor" value={lead.admitting_doctor} field="admitting_doctor" onSave={saveField} /></div>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🗂️</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Mapping Details</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Passport Number" value={lead.passport_number} field="passport_number" onSave={saveField} /><EF label="Visa Number" value={lead.visa_number} field="visa_number" onSave={saveField} /><EF label="Hospital Reg No." value={lead.hospital_reg_number} field="hospital_reg_number" onSave={saveField} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}><EF label="Date of Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" /><EF label="Date of First Consultation" value={lead.date_first_consultation?.split('T')[0]} field="date_first_consultation" onSave={saveField} type="date" /><EF label="Admitting Doctor" value={lead.admitting_doctor} field="admitting_doctor" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Date of Admission" value={lead.date_admission?.split('T')[0]} field="date_admission" onSave={saveField} type="date" /><EF label="Date of Discharge" value={lead.date_discharge?.split('T')[0]} field="date_discharge" onSave={saveField} type="date" /><EF label="Final Bill" value={lead.final_bill} field="final_bill" onSave={saveField} type="number" /></div>
             </div>
           </>)}
@@ -1025,7 +1028,7 @@ function CRMApp({ user, onLogout }) {
               {(lead.activity || []).length > 0 && (<div style={{ marginTop: 20 }}>
                 <SectionLabel>Activity Log</SectionLabel>
                 {(lead.activity || []).map(a => (
-                  <div key={a.id} style={{ fontSize: 10, color: C.slate, padding: '4px 0', borderBottom: `1px solid ${C.borderLight}` }}>
+                  <div key={a.id} style={{ fontSize: 10, color: C.slate, padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
                     <b>{a.user_name}</b> {a.action.replace(/_/g, ' ')} — {fmtDate(a.created_at)}
                   </div>
                 ))}
@@ -1066,7 +1069,7 @@ function CRMApp({ user, onLogout }) {
             <tbody>{performance.map(p => {
               const rate = p.total > 0 ? Math.round((parseInt(p.converted) / parseInt(p.total)) * 100) : 0;
               return (
-                <tr key={p.assigned_counselor} style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                <tr key={p.assigned_counselor} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13 }}><div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CounselorAvatar name={p.assigned_counselor} size={24} />{p.assigned_counselor}</div></td>
                   <td style={{ padding: '8px 10px', fontSize: 12 }}>{p.total}</td>
                   <td style={{ padding: '8px 10px', fontSize: 12, color: C.green, fontWeight: 700 }}>{p.converted}</td>
@@ -1074,7 +1077,7 @@ function CRMApp({ user, onLogout }) {
                   <td style={{ padding: '8px 10px', fontSize: 12, color: C.red }}>{p.lost}</td>
                   <td style={{ padding: '8px 10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 40, height: 5, background: C.offWhite, borderRadius: 3 }}><div style={{ height: '100%', width: `${rate}%`, background: rate > 30 ? C.green : rate > 15 ? C.amber : C.red, borderRadius: 3 }} /></div>
+                      <div style={{ width: 40, height: 5, background: '#f3f4f6', borderRadius: 3 }}><div style={{ height: '100%', width: `${rate}%`, background: rate > 30 ? C.green : rate > 15 ? C.amber : C.red, borderRadius: 3 }} /></div>
                       <span style={{ fontSize: 11, fontWeight: 700, color: rate > 30 ? C.green : rate > 15 ? C.amber : C.red }}>{rate}%</span>
                     </div>
                   </td>
@@ -1262,7 +1265,7 @@ function CRMApp({ user, onLogout }) {
             </thead>
             <tbody>
               {users.map((u, idx) => (
-                <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: idx % 2 === 0 ? C.white : C.cream + '80' }}>
+                <tr key={u.id} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? C.white : C.cream + '80' }}>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ width: 30, height: 30, borderRadius: 7, background: `${C.teal}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.teal, flexShrink: 0 }}>{u.display_name?.charAt(0)}</div>
@@ -1387,11 +1390,11 @@ function CRMApp({ user, onLogout }) {
           <table style={{ width: '100%', background: C.white, borderRadius: 10, overflow: 'hidden', border: `1px solid ${C.borderLight}`, borderCollapse: 'collapse' }}>
             <thead><tr style={{ background: C.cream }}>
               {['Name', 'Username', 'Role', 'Email', 'Status', 'Actions'].map(h => (
-                <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 9.5, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.8, borderBottom: `1.5px solid ${C.border}` }}>{h}</th>
+                <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 9.5, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.8, borderBottom: '2px solid #d0d5dd' }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>{users.map(u => (
-              <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, opacity: u.is_active ? 1 : 0.5 }}>
+              <tr key={u.id} style={{ borderBottom: '1px solid #e5e7eb', opacity: u.is_active ? 1 : 0.5 }}>
                 <td style={td}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><CounselorAvatar name={u.display_name} size={28} /><span style={{ fontWeight: 700, fontSize: 13 }}>{u.display_name}</span></div></td>
                 <td style={td}><span style={{ fontSize: 11, fontFamily: 'monospace', color: C.slate }}>{u.username}</span></td>
                 <td style={td}><span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, color: u.role === 'admin' ? C.red : u.role === 'manager' ? C.purple : C.teal, background: u.role === 'admin' ? C.redBg : u.role === 'manager' ? C.purpleBg : C.tealBg, textTransform: 'uppercase' }}>{u.role}</span></td>
@@ -1479,18 +1482,18 @@ function CRMApp({ user, onLogout }) {
 
       <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT }}>
-          <thead><tr style={{ background: C.offWhite }}>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Contact</th>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Email / Phone</th>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Country</th>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Type</th>
-            <th style={{ ...td, textAlign: 'center', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Leads</th>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Counselor</th>
-            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Added</th>
+          <thead><tr style={{ background: '#f3f4f6' }}>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Contact</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Email / Phone</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Country</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Type</th>
+            <th style={{ ...td, textAlign: 'center', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Leads</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Counselor</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #d0d5dd' }}>Added</th>
           </tr></thead>
           <tbody>
             {contacts.map(c => (
-              <tr key={c.contact_id} onClick={() => openContact(c)} style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <tr key={c.contact_id} onClick={() => openContact(c)} style={{ borderBottom: '1px solid #e5e7eb', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <td style={td}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: `${C.cyan}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.cyan, flexShrink: 0 }}>{(c.first_name || '?')[0]}{(c.last_name || '?')[0]}</div>
@@ -1586,17 +1589,17 @@ function CRMApp({ user, onLogout }) {
           {/* Left: Contact Info */}
           <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.borderLight}` }}>
             {/* Contact Details Card */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 15 }}>👤</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Contact Details</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Contact Details</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}>
                 <EF label="Title" value={contact.prefix} field="prefix" onSave={saveContactField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
                 <EF label="First Name" value={contact.first_name} field="first_name" onSave={saveContactField} />
                 <EF label="Last Name" value={contact.last_name} field="last_name" onSave={saveContactField} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #e5e7eb' }}>
                 <EF label="Email" value={contact.email} field="email" onSave={saveContactField} type="email" />
                 <EF label="ISD" value={contact.isd} field="isd" onSave={saveContactField} />
                 <EF label="Phone" value={contact.phone} field="phone" onSave={saveContactField} />
@@ -1609,12 +1612,12 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Source */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>🔗</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Source</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Source</span>
               </div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}>
                 <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page URL</div>
                 <div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4 }}>{contact.page_url ? <a href={cleanUrl(contact.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none' }}>{contact.page_title || cleanUrl(contact.page_url)}</a> : '—'}</div>
               </div>
@@ -1626,11 +1629,11 @@ function CRMApp({ user, onLogout }) {
 
             {/* Counselor & Notes */}
             <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>📝</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Assignment & Notes</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Assignment & Notes</span>
               </div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}>
                 <EF label="Assigned Counselor" value={contact.assigned_counselor} field="assigned_counselor" onSave={saveContactField} options={counselors.length > 0 ? counselors : ['Admin']} />
               </div>
               <div>
@@ -1707,10 +1710,10 @@ function CRMApp({ user, onLogout }) {
   };
 
   // ---- LOADING / LAYOUT ----
-  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.offWhite }}><div style={{ textAlign: 'center' }}><img src={LOGO_URL} alt="Loading" style={{ height: 40, borderRadius: 8, marginBottom: 8 }} /><div style={{ color: C.slateLight, fontSize: 12, fontFamily: FONT }}>Loading...</div></div></div>;
+  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6' }}><div style={{ textAlign: 'center' }}><img src={LOGO_URL} alt="Loading" style={{ height: 40, borderRadius: 8, marginBottom: 8 }} /><div style={{ color: C.slateLight, fontSize: 12, fontFamily: FONT }}>Loading...</div></div></div>;
 
   return (
-    <div style={{ fontFamily: FONT, display: 'flex', height: '100vh', overflow: 'hidden', background: C.offWhite }}>
+    <div style={{ fontFamily: FONT, display: 'flex', height: '100vh', overflow: 'hidden', background: '#f3f4f6' }}>
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <TopBar />
@@ -1748,7 +1751,7 @@ const btnTopbar = { background: C.cream, border: `1px solid ${C.border}`, border
 const btnSmallTeal = { padding: '5px 13px', borderRadius: 6, border: 'none', background: C.teal, color: C.white, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT };
 const btnSmallGhost = { padding: '5px 11px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.white, fontSize: 11, cursor: 'pointer', fontFamily: FONT, color: C.slateDark };
 const btnMicro = { padding: '3px 7px', borderRadius: 4, border: `1px solid ${C.border}`, background: C.white, cursor: 'pointer', fontSize: 10, fontFamily: FONT };
-const thSched = { padding: '8px 6px', textAlign: 'center', fontSize: 9, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.6, borderBottom: `1.5px solid ${C.border}`, fontFamily: FONT };
+const thSched = { padding: '8px 6px', textAlign: 'center', fontSize: 9, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.6, borderBottom: '2px solid #d0d5dd', fontFamily: FONT };
 
 // ============================================================
 // ROOT APP

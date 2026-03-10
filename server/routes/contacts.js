@@ -4,15 +4,24 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Countries excluded from contacts view (non-targeted)
+const BLOCKED_COUNTRIES = ['India', 'Bangladesh', 'Pakistan'];
+
 // ============================================================
 // LIST CONTACTS (with search, pagination, filters)
 // ============================================================
 router.get('/', auth, async (req, res) => {
   try {
-    const { search, sort, order, limit, offset, contact_type } = req.query;
+    const { search, sort, order, limit, offset, contact_type, include_blocked } = req.query;
     let where = [];
     let params = [];
     let i = 1;
+
+    // Exclude blocked countries by default
+    if (include_blocked !== 'true') {
+      where.push(`(c.nationality IS NULL OR LOWER(c.nationality) NOT IN (${BLOCKED_COUNTRIES.map(() => `$${i++}`).join(',')}))`);
+      params.push(...BLOCKED_COUNTRIES.map(c => c.toLowerCase()));
+    }
 
     if (contact_type && contact_type !== 'all') {
       where.push(`c.contact_type = $${i++}`);
@@ -66,10 +75,11 @@ router.get('/', auth, async (req, res) => {
 // ============================================================
 router.get('/stats', auth, async (req, res) => {
   try {
+    const blockedFilter = `WHERE (nationality IS NULL OR LOWER(nationality) NOT IN ('india','bangladesh','pakistan'))`;
     const [totalRes, todayRes, typeRes] = await Promise.all([
-      pool.query('SELECT COUNT(*) FROM contacts'),
-      pool.query("SELECT COUNT(*) FROM contacts WHERE created_at >= CURRENT_DATE"),
-      pool.query("SELECT contact_type, COUNT(*) as count FROM contacts GROUP BY contact_type"),
+      pool.query(`SELECT COUNT(*) FROM contacts ${blockedFilter}`),
+      pool.query(`SELECT COUNT(*) FROM contacts ${blockedFilter} AND created_at >= CURRENT_DATE`),
+      pool.query(`SELECT contact_type, COUNT(*) as count FROM contacts ${blockedFilter} GROUP BY contact_type`),
     ]);
 
     const byType = {};

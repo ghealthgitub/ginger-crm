@@ -293,6 +293,10 @@ function CRMApp({ user, onLogout }) {
   const [contactsTotal, setContactsTotal] = useState(0);
   const [selectedContact, setSelectedContact] = useState(null);
   const [contactSearch, setContactSearch] = useState('');
+  const [contactSort, setContactSort] = useState('created_at');
+  const [contactOrder, setContactOrder] = useState('desc');
+  const [leadSort, setLeadSort] = useState('created_at');
+  const [leadOrder, setLeadOrder] = useState('desc');
 
   const isAdmin = user.role === 'admin';
   const isAdminOrManager = user.role === 'admin' || user.role === 'manager';
@@ -300,7 +304,7 @@ function CRMApp({ user, onLogout }) {
   const fetchData = useCallback(async () => {
     try {
       const [leadsData, statsData, fuData] = await Promise.all([
-        leadsApi.list({ category: activeCategory, status: filterStatus !== 'all' ? filterStatus : undefined, counselor: filterCounselor !== 'all' ? filterCounselor : undefined, urgency: filterUrgency !== 'all' ? filterUrgency : undefined, search: search || undefined, limit: 200 }),
+        leadsApi.list({ category: activeCategory, status: filterStatus !== 'all' ? filterStatus : undefined, counselor: filterCounselor !== 'all' ? filterCounselor : undefined, urgency: filterUrgency !== 'all' ? filterUrgency : undefined, search: search || undefined, sort: leadSort, order: leadOrder, limit: 200 }),
         leadsApi.stats(),
         leadsApi.followUps(),
       ]);
@@ -313,15 +317,15 @@ function CRMApp({ user, onLogout }) {
       }
     } catch (e) { console.error('Fetch error:', e); }
     setLoading(false);
-  }, [filterStatus, filterCounselor, filterUrgency, search, isAdminOrManager, activeCategory]);
+  }, [filterStatus, filterCounselor, filterUrgency, search, isAdminOrManager, activeCategory, leadSort, leadOrder]);
 
   const fetchContacts = useCallback(async () => {
     try {
-      const data = await contactsApi.list({ search: contactSearch || undefined, limit: 200 });
+      const data = await contactsApi.list({ search: contactSearch || undefined, sort: contactSort, order: contactOrder, limit: 200 });
       setContacts(data.contacts);
       setContactsTotal(data.total);
     } catch (e) { console.error('Contacts fetch error:', e); }
-  }, [contactSearch]);
+  }, [contactSearch, contactSort, contactOrder]);
 
   useEffect(() => {
     fetchData();
@@ -669,6 +673,14 @@ function CRMApp({ user, onLogout }) {
       <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selStyle}><option value="all">All Status</option>{STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
       {isAdminOrManager && <select value={filterCounselor} onChange={e => setFilterCounselor(e.target.value)} style={selStyle}><option value="all">All Counselors</option>{counselors.map(c => <option key={c} value={c}>{c}</option>)}</select>}
       <select value={filterUrgency} onChange={e => setFilterUrgency(e.target.value)} style={selStyle}><option value="all">All Urgency</option><option>Emergency</option><option>Urgent</option><option>Semi-Urgent</option><option>Routine</option></select>
+      <select value={`${leadSort}_${leadOrder}`} onChange={e => { const [s, o] = e.target.value.split('_'); setLeadSort(s); setLeadOrder(o); }} style={selStyle}>
+        <option value="created_at_desc">Newest First</option>
+        <option value="created_at_asc">Oldest First</option>
+        <option value="first_name_asc">Name A–Z</option>
+        <option value="first_name_desc">Name Z–A</option>
+        <option value="updated_at_desc">Recently Updated</option>
+        <option value="nationality_asc">Country A–Z</option>
+      </select>
       <div style={{ position: 'relative' }}>
         <button onClick={() => setShowColPicker(!showColPicker)} style={{ ...btnTopbar, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>⚙ Columns</button>
         {showColPicker && <div style={{ position: 'absolute', top: 36, right: 0, background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 12, zIndex: 50, width: 200 }}>
@@ -1412,6 +1424,13 @@ function CRMApp({ user, onLogout }) {
           <input value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search contacts..." style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
           {contactSearch && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 12 }} onClick={() => setContactSearch('')}>✕</span>}
         </div>
+        <select value={`${contactSort}_${contactOrder}`} onChange={e => { const [s, o] = e.target.value.split('_'); setContactSort(s); setContactOrder(o); }} style={selStyle}>
+          <option value="created_at_desc">Newest First</option>
+          <option value="created_at_asc">Oldest First</option>
+          <option value="first_name_asc">Name A–Z</option>
+          <option value="first_name_desc">Name Z–A</option>
+          <option value="updated_at_desc">Recently Updated</option>
+        </select>
         <div style={{ marginLeft: 'auto', fontSize: 12, color: C.slate, fontWeight: 500 }}>{contactsTotal} contacts</div>
       </div>
       <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden' }}>
@@ -1513,6 +1532,7 @@ function CRMApp({ user, onLogout }) {
             <div style={{ display: 'flex', gap: 6 }}>
               {waUrl && <a href={waUrl} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 8, background: '#25D366', color: C.white, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>WhatsApp</a>}
               <button onClick={() => setShowCreateLead(true)} style={{ padding: '6px 14px', borderRadius: 8, background: C.orange, border: 'none', color: C.white, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>+ New Lead</button>
+              {isAdminOrManager && <button onClick={async () => { if (window.confirm(`Delete contact ${contact.first_name} ${contact.last_name}? Their leads will be unlinked but not deleted.`)) { try { await contactsApi.remove(contact.contact_id); fetchContacts(); setView('contacts'); } catch(e) { console.error(e); } }}} style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Delete Contact</button>}
             </div>
           </div>
         </div>

@@ -540,7 +540,7 @@ router.get('/', auth, async (req, res) => {
     }
 
     const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
-    const sortField = sort || 'created_at';
+    const sortField = ['created_at', 'first_name', 'last_name', 'email', 'updated_at', 'nationality', 'status', 'priority'].includes(sort) ? sort : 'created_at';
     const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
     const lim = Math.min(parseInt(limit) || 100, 500);
     const off = parseInt(offset) || 0;

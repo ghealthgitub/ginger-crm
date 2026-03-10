@@ -82,6 +82,7 @@ export const contactsApi = {
   update: (contactId, data) => api(`/contacts/${contactId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   stats: () => api('/contacts/stats'),
   createLead: (contactId, data = {}) => api(`/contacts/${contactId}/create-lead`, { method: 'POST', body: JSON.stringify(data) }),
+  remove: (contactId) => api(`/contacts/${contactId}`, { method: 'DELETE' }),
 };
 
 export default api;

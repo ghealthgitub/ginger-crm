@@ -1,6 +1,6 @@
 const express = require('express');
 const pool = require('../db');
-const { auth } = require('../middleware/auth');
+const { auth, managerOrAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -219,6 +219,24 @@ router.post('/:contactId/create-lead', auth, async (req, res) => {
     res.json({ success: true, lead: result.rows[0] });
   } catch (e) {
     console.error('Create lead from contact error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============================================================
+// DELETE CONTACT (admin/manager only)
+// ============================================================
+router.delete('/:contactId', auth, managerOrAdmin, async (req, res) => {
+  try {
+    // Unlink leads from this contact first (don't delete leads)
+    await pool.query('UPDATE leads SET contact_id = NULL WHERE contact_id = $1', [req.params.contactId]);
+
+    const result = await pool.query('DELETE FROM contacts WHERE contact_id = $1 RETURNING *', [req.params.contactId]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+
+    res.json({ message: 'Contact deleted', contact_id: req.params.contactId });
+  } catch (e) {
+    console.error('Delete contact error:', e);
     res.status(500).json({ error: 'Server error' });
   }
 });

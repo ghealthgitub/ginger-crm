@@ -153,8 +153,14 @@ async function initDB() {
       await client.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS ${col}`);
     }
 
-    // Add FK if not exists
-    try { await client.query(`ALTER TABLE leads ADD CONSTRAINT fk_leads_contact FOREIGN KEY (contact_id) REFERENCES contacts(contact_id) ON DELETE SET NULL`); } catch(e) { /* already exists */ }
+    // Add FK if not exists (use savepoint so failure doesn't abort transaction)
+    try {
+      await client.query('SAVEPOINT fk_check');
+      await client.query(`ALTER TABLE leads ADD CONSTRAINT fk_leads_contact FOREIGN KEY (contact_id) REFERENCES contacts(contact_id) ON DELETE SET NULL`);
+      await client.query('RELEASE SAVEPOINT fk_check');
+    } catch(e) {
+      await client.query('ROLLBACK TO SAVEPOINT fk_check');
+    }
 
     await client.query(`UPDATE leads SET lead_category = 'patient' WHERE lead_category IS NULL`);
 

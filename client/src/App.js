@@ -830,7 +830,6 @@ function CRMApp({ user, onLogout }) {
 
     const tabs = [
       { key: 'overview', label: 'Overview' },
-      { key: 'medical', label: 'Medical' },
       { key: 'followups', label: `Follow-ups${(lead.follow_ups||[]).length ? ` (${(lead.follow_ups||[]).length})` : ''}` },
       { key: 'attachments', label: `Docs${(lead.attachments||[]).length ? ` (${(lead.attachments||[]).length})` : ''}` },
       { key: 'timeline', label: 'Timeline' },
@@ -935,22 +934,6 @@ function CRMApp({ user, onLogout }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Date of Admission" value={lead.date_admission?.split('T')[0]} field="date_admission" onSave={saveField} type="date" /><EF label="Date of Discharge" value={lead.date_discharge?.split('T')[0]} field="date_discharge" onSave={saveField} type="date" /><EF label="Final Bill" value={lead.final_bill} field="final_bill" onSave={saveField} type="number" /></div>
             </div>
           </>)}
-
-          {activeTab === 'medical' && (
-            <div style={{ display: 'grid', gap: 16 }}>
-              <EditableField label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." />
-              <EditableField label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} type="textarea" />
-              <EditableField label="Referred Hospitals" value={lead.referred_hospitals} field="referred_hospitals" onSave={saveField} multiOptions={HOSPITAL_OPTIONS} />
-              <EditableField label="Recommended Doctors" value={lead.recommended_doctors} field="recommended_doctors" onSave={saveField} multiOptions={DOCTOR_OPTIONS} />
-              <div style={{ padding: 14, background: C.cream, borderRadius: 8 }}>
-                <SectionLabel>Patient Review</SectionLabel>
-                <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 14 }}>
-                  <EditableField label="Rating (1-5)" value={lead.review_rating} field="review_rating" onSave={saveField} options={['1','2','3','4','5']} />
-                  <EditableField label="Review" value={lead.review_text} field="review_text" onSave={saveField} type="textarea" />
-                </div>
-              </div>
-            </div>
-          )}
 
           {activeTab === 'followups' && (
             <div>

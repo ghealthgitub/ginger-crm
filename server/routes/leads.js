@@ -288,6 +288,61 @@ router.post('/webhook', async (req, res) => {
 
     const lead = result.rows[0];
 
+    // ============================================================
+    // AUTO-CREATE / LINK CONTACT
+    // ============================================================
+    try {
+      let contactId = null;
+
+      // Try to find existing contact by email+phone, then email, then phone
+      if (d.email && d.phone) {
+        const existing = await pool.query(
+          'SELECT contact_id FROM contacts WHERE email = $1 AND phone = $2 LIMIT 1',
+          [d.email, d.phone]
+        );
+        if (existing.rows.length > 0) contactId = existing.rows[0].contact_id;
+      }
+      if (!contactId && d.email) {
+        const existing = await pool.query(
+          'SELECT contact_id FROM contacts WHERE email = $1 LIMIT 1',
+          [d.email]
+        );
+        if (existing.rows.length > 0) contactId = existing.rows[0].contact_id;
+      }
+      if (!contactId && d.phone) {
+        const existing = await pool.query(
+          'SELECT contact_id FROM contacts WHERE phone = $1 LIMIT 1',
+          [d.phone]
+        );
+        if (existing.rows.length > 0) contactId = existing.rows[0].contact_id;
+      }
+
+      // Create new contact if not found
+      if (!contactId) {
+        contactId = `C${Date.now()}${Math.random().toString(36).substring(2,6)}`;
+        await pool.query(`
+          INSERT INTO contacts (
+            contact_id, prefix, first_name, last_name, email, isd, phone,
+            nationality, contact_type, relationship_type, contact_preference,
+            page_url, page_title, referrer, assigned_counselor
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'patient',$9,$10,$11,$12,$13,$14)
+          ON CONFLICT DO NOTHING
+        `, [
+          contactId, d.prefix, d.firstName, d.lastName, d.email,
+          d.isd, d.phone, d.nationality, d.relationshipType,
+          d.contactPreference, d.pageUrl, d.pageTitle, d.referrer, counselor
+        ]);
+      }
+
+      // Link lead to contact
+      if (contactId) {
+        await pool.query('UPDATE leads SET contact_id = $1 WHERE lead_id = $2', [contactId, leadId]);
+      }
+    } catch (contactErr) {
+      console.error('Contact auto-link error (non-fatal):', contactErr);
+      // Non-fatal — lead is already saved
+    }
+
     // Record initial status in timeline
     await pool.query('INSERT INTO status_timeline (lead_id, status, changed_by, note) VALUES ($1, $2, $3, $4)',
       [leadId, 'new', 'System', `Lead captured from ${d.nationality || 'unknown'} via ${d.contactPreference || 'website'}`]);

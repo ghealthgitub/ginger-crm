@@ -6,6 +6,7 @@ require('dotenv').config();
 const initDB = require('./db-init');
 const authRoutes = require('./routes/auth');
 const leadsRoutes = require('./routes/leads');
+const contactsRoutes = require('./routes/contacts');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use(express.json({ limit: '5mb' }));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadsRoutes);
+app.use('/api/contacts', contactsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));

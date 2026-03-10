@@ -72,4 +72,16 @@ export const leadsApi = {
   deleteAttachment: (leadId, attId) => api(`/leads/${leadId}/attachments/${attId}`, { method: 'DELETE' }),
 };
 
+export const contactsApi = {
+  list: (params = {}) => {
+    const clean = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(clean).toString();
+    return api(`/contacts${qs ? '?' + qs : ''}`);
+  },
+  get: (contactId) => api(`/contacts/${contactId}`),
+  update: (contactId, data) => api(`/contacts/${contactId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  stats: () => api('/contacts/stats'),
+  createLead: (contactId, data = {}) => api(`/contacts/${contactId}/create-lead`, { method: 'POST', body: JSON.stringify(data) }),
+};
+
 export default api;

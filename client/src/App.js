@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { authApi, leadsApi, usersApi, schedulesApi } from './utils/api';
+import { authApi, leadsApi, usersApi, schedulesApi, contactsApi } from './utils/api';
 
 // ============================================================
 // BRAND & DESIGN SYSTEM
@@ -289,6 +289,10 @@ function CRMApp({ user, onLogout }) {
   const [filterUrgency, setFilterUrgency] = useState('all');
   const [activeCategory, setActiveCategory] = useState('patient');
   const [collapsed, setCollapsed] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [contactsTotal, setContactsTotal] = useState(0);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [contactSearch, setContactSearch] = useState('');
 
   const isAdmin = user.role === 'admin';
   const isAdminOrManager = user.role === 'admin' || user.role === 'manager';
@@ -311,12 +315,24 @@ function CRMApp({ user, onLogout }) {
     setLoading(false);
   }, [filterStatus, filterCounselor, filterUrgency, search, isAdminOrManager, activeCategory]);
 
+  const fetchContacts = useCallback(async () => {
+    try {
+      const data = await contactsApi.list({ search: contactSearch || undefined, limit: 200 });
+      setContacts(data.contacts);
+      setContactsTotal(data.total);
+    } catch (e) { console.error('Contacts fetch error:', e); }
+  }, [contactSearch]);
+
   useEffect(() => {
     fetchData();
     if (view === 'scheduling' || view === 'settings') return;
     const iv = setInterval(fetchData, 30000);
     return () => clearInterval(iv);
   }, [fetchData, view]);
+
+  useEffect(() => {
+    if (view === 'contacts' || view === 'contact_detail') fetchContacts();
+  }, [fetchContacts, view]);
 
   // Browser back button — keep user inside CRM
   const viewRef = React.useRef(view);
@@ -328,6 +344,7 @@ function CRMApp({ user, onLogout }) {
     const handlePop = (e) => {
       const v = viewRef.current;
       if (v === 'detail') { setView('leads'); }
+      else if (v === 'contact_detail') { setView('contacts'); }
       else if (v !== 'dashboard') { setView('dashboard'); }
       // Re-push so back button always stays in CRM
       window.history.pushState({ crm: true, view: v }, '');
@@ -393,7 +410,7 @@ function CRMApp({ user, onLogout }) {
     if (isAdmin) nav.push({ key: 'settings', label: 'Settings', icon: '⚙' });
 
     const sideBtn = (key, label, icon, isView) => {
-      const active = isView ? view === key || (view === 'detail' && key === 'leads') : false;
+      const active = isView ? view === key || (view === 'detail' && key === 'leads') || (view === 'contact_detail' && key === 'contacts') : false;
       return (
         <button key={key} onClick={() => setView(key)}
           style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 10, width: '100%', padding: collapsed ? '9px 0' : '9px 12px', borderRadius: 8, border: 'none', background: active ? `${C.orange}18` : 'transparent', color: active ? '#fff' : 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, fontWeight: active ? 600 : 500, textAlign: collapsed ? 'center' : 'left', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: 2, transition: 'all 0.15s', fontFamily: FONT }}
@@ -433,6 +450,10 @@ function CRMApp({ user, onLogout }) {
           {catBtn(CATEGORIES[0])}
           {sideBtn('pipeline', 'Pipeline', '▥', true)}
 
+          {/* Contacts */}
+          {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '12px 0 5px', paddingLeft: 8, fontSize: 9.5 }}>People</div>}
+          {sideBtn('contacts', 'Contacts', '⊕', true)}
+
           {/* Secondary: Other & Non-Targeted */}
           {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1.2, margin: '12px 0 5px', paddingLeft: 8, fontSize: 9.5 }}>Other</div>}
           {catBtn(CATEGORIES[1])}
@@ -461,6 +482,8 @@ function CRMApp({ user, onLogout }) {
     if (view === 'leads' || view === 'detail') crumbs.push({ label: activeCategory === 'patient' ? 'Leads' : activeCategory === 'other' ? 'Other' : 'Non-Targeted', view: 'leads' });
     if (view === 'detail' && selectedLead) crumbs.push({ label: `${selectedLead.first_name} ${selectedLead.last_name}`, view: 'detail' });
     if (view === 'pipeline') crumbs.push({ label: 'Pipeline', view: 'pipeline' });
+    if (view === 'contacts' || view === 'contact_detail') crumbs.push({ label: 'Contacts', view: 'contacts' });
+    if (view === 'contact_detail' && selectedContact) crumbs.push({ label: `${selectedContact.first_name} ${selectedContact.last_name}`, view: 'contact_detail' });
     if (view === 'analytics') crumbs.push({ label: 'Analytics', view: 'analytics' });
     if (view === 'scheduling') crumbs.push({ label: 'Scheduling', view: 'scheduling' });
     if (view === 'settings') crumbs.push({ label: 'Settings', view: 'settings' });
@@ -834,6 +857,10 @@ function CRMApp({ user, onLogout }) {
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, fontWeight: 600 }}>{lead.page_url ? <a href={cleanUrl(lead.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none', borderBottom: `1px dashed ${C.blue}40` }}>{lead.page_title || 'View Page'}</a> : <span style={{ color: C.dark }}>{lead.page_title || '—'}</span>}</div></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
               <div style={{ padding: '6px 14px', background: `${C.blue}03`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.slateLight }}><span>Enquiry: {fmtDate(lead.created_at)}</span><span style={{ fontFamily: 'monospace', fontSize: 10 }}>ID: {lead.lead_id}</span></div>
+              {lead.contact_id && <div style={{ padding: '8px 14px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Linked Contact</div><span style={{ fontSize: 12, fontFamily: 'monospace', color: C.cyan }}>{lead.contact_id}</span></div>
+                <button onClick={async () => { try { const full = await contactsApi.get(lead.contact_id); setSelectedContact(full); setView('contact_detail'); } catch(e) { console.error(e); }}} style={{ ...btnSmallGhost, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>⊕ View Contact</button>
+              </div>}
             </div>
 
             {/* Enquirer */}
@@ -1372,6 +1399,248 @@ function CRMApp({ user, onLogout }) {
     );
   };
 
+  // ---- CONTACTS LIST ----
+  const openContact = async (contact) => {
+    try { const full = await contactsApi.get(contact.contact_id); setSelectedContact(full); setView('contact_detail'); } catch (e) { console.error(e); }
+  };
+
+  const ContactsList = () => (
+    <div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', fontFamily: FONT }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '8px 14px', flex: '1 1 280px', maxWidth: 380 }}>
+          <span style={{ color: C.slateLight, fontSize: 14 }}>⌕</span>
+          <input value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search contacts..." style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
+          {contactSearch && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 12 }} onClick={() => setContactSearch('')}>✕</span>}
+        </div>
+        <div style={{ marginLeft: 'auto', fontSize: 12, color: C.slate, fontWeight: 500 }}>{contactsTotal} contacts</div>
+      </div>
+      <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT }}>
+          <thead><tr style={{ background: C.offWhite }}>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Contact</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Email / Phone</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Country</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Type</th>
+            <th style={{ ...td, textAlign: 'center', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Leads</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Counselor</th>
+            <th style={{ ...td, textAlign: 'left', fontSize: 10, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1.5px solid ${C.border}` }}>Added</th>
+          </tr></thead>
+          <tbody>
+            {contacts.map(c => (
+              <tr key={c.contact_id} onClick={() => openContact(c)} style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.cream} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={td}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: `${C.cyan}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.cyan, flexShrink: 0 }}>{(c.first_name || '?')[0]}{(c.last_name || '?')[0]}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{c.prefix} {c.first_name} {c.last_name}</div>
+                      <div style={{ fontSize: 10, color: C.slateLight, fontFamily: 'monospace' }}>{c.contact_id}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={td}>
+                  <div style={{ fontSize: 12, color: C.slateDark }}>{c.email || '—'}</div>
+                  <div style={{ fontSize: 11, color: C.slateLight }}>{c.isd} {c.phone || '—'}</div>
+                </td>
+                <td style={td}><span style={{ fontSize: 12 }}>{getFlag(c.nationality)} {c.nationality || '—'}</span></td>
+                <td style={td}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, color: c.contact_type === 'patient' ? C.orange : C.purple, background: c.contact_type === 'patient' ? C.orangeBg : C.purpleBg, textTransform: 'uppercase' }}>{c.contact_type || 'patient'}</span>
+                </td>
+                <td style={{ ...td, textAlign: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: parseInt(c.lead_count) > 0 ? C.teal : C.slateLight }}>{c.lead_count || 0}</span>
+                </td>
+                <td style={td}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <CounselorAvatar name={c.assigned_counselor} size={22} />
+                    <span style={{ fontSize: 12, color: C.slateDark }}>{c.assigned_counselor || '—'}</span>
+                  </div>
+                </td>
+                <td style={td}><span style={{ fontSize: 11, color: C.slateLight }}>{timeAgo(c.created_at)}</span></td>
+              </tr>
+            ))}
+            {contacts.length === 0 && <tr><td colSpan="7" style={{ padding: 40, textAlign: 'center', color: C.slateLight, fontSize: 12 }}>No contacts found</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // ---- CONTACT DETAIL ----
+  const ContactDetail = () => {
+    const [showCreateLead, setShowCreateLead] = useState(false);
+    const [newLeadData, setNewLeadData] = useState({ service_type: '', treatment_sought: '', message: '', priority: 'medium' });
+    const [creating, setCreating] = useState(false);
+    const contact = selectedContact;
+    if (!contact) return null;
+
+    const saveContactField = async (field, value) => {
+      try {
+        await contactsApi.update(contact.contact_id, { [field]: value });
+        const updated = await contactsApi.get(contact.contact_id);
+        setSelectedContact(updated);
+      } catch (e) { console.error('Update contact failed:', e); }
+    };
+
+    const handleCreateLead = async () => {
+      setCreating(true);
+      try {
+        const result = await contactsApi.createLead(contact.contact_id, newLeadData);
+        if (result.success) {
+          const updated = await contactsApi.get(contact.contact_id);
+          setSelectedContact(updated);
+          setShowCreateLead(false);
+          setNewLeadData({ service_type: '', treatment_sought: '', message: '', priority: 'medium' });
+          fetchData(); // Refresh leads list too
+        }
+      } catch (e) { console.error('Create lead failed:', e); }
+      setCreating(false);
+    };
+
+    const waUrl = contact.isd && contact.phone ? `https://wa.me/${(contact.isd + contact.phone).replace(/[^0-9]/g, '')}` : null;
+
+    return (
+      <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, overflow: 'hidden', fontFamily: FONT }}>
+        {/* Header */}
+        <div style={{ background: `linear-gradient(135deg, ${C.navy}, ${C.navyMid})`, color: C.white, padding: '18px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <button onClick={() => setView('contacts')} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.white, fontSize: 12, fontFamily: FONT }}>← Back</button>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: -0.3 }}>{contact.prefix} {contact.first_name} {contact.last_name}</h2>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, color: C.cyan, background: 'rgba(8,145,178,0.15)', textTransform: 'uppercase' }}>{contact.contact_type || 'patient'}</span>
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{getFlag(contact.nationality)} {contact.nationality} · {contact.email} · {contact.isd} {contact.phone} · {contact.contact_id}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {waUrl && <a href={waUrl} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 8, background: '#25D366', color: C.white, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>WhatsApp</a>}
+              <button onClick={() => setShowCreateLead(true)} style={{ padding: '6px 14px', borderRadius: 8, background: C.orange, border: 'none', color: C.white, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>+ New Lead</button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+          {/* Left: Contact Info */}
+          <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.borderLight}` }}>
+            {/* Contact Details Card */}
+            <div style={{ background: `linear-gradient(135deg, #ecfeff, #f0fdfa)`, borderRadius: 12, border: `1px solid ${C.cyan}18`, marginBottom: 14, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.cyan}10, ${C.cyan}04)`, borderBottom: `1px solid ${C.cyan}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 15 }}>👤</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: C.cyan, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Contact Details</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
+                <EF label="Title" value={contact.prefix} field="prefix" onSave={saveContactField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
+                <EF label="First Name" value={contact.first_name} field="first_name" onSave={saveContactField} />
+                <EF label="Last Name" value={contact.last_name} field="last_name" onSave={saveContactField} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
+                <EF label="Email" value={contact.email} field="email" onSave={saveContactField} type="email" />
+                <EF label="ISD" value={contact.isd} field="isd" onSave={saveContactField} />
+                <EF label="Phone" value={contact.phone} field="phone" onSave={saveContactField} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+                <EF label="Nationality" value={contact.nationality} field="nationality" onSave={saveContactField} options={COUNTRY_LIST} />
+                <EF label="Contact Via" value={contact.contact_preference} field="contact_preference" onSave={saveContactField} options={['whatsapp', 'telegram', 'email', 'phone']} />
+                <EF label="Relationship" value={contact.relationship_type} field="relationship_type" onSave={saveContactField} options={['Self','Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} />
+              </div>
+            </div>
+
+            {/* Source */}
+            <div style={{ background: `linear-gradient(135deg, #f0f7ff, #fafcff)`, borderRadius: 12, border: `1px solid ${C.blue}18`, marginBottom: 14, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.blue}10, ${C.blue}05)`, borderBottom: `1px solid ${C.blue}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 15 }}>🔗</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Source</span>
+              </div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
+                <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page URL</div>
+                <div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4 }}>{contact.page_url ? <a href={cleanUrl(contact.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none' }}>{contact.page_title || cleanUrl(contact.page_url)}</a> : '—'}</div>
+              </div>
+              <div style={{ padding: '8px 14px' }}>
+                <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div>
+                <div style={{ fontSize: 12, color: C.slateDark }}>{contact.referrer || 'Direct'}</div>
+              </div>
+            </div>
+
+            {/* Counselor & Notes */}
+            <div style={{ background: `linear-gradient(135deg, #f0fdf4, #fafffe)`, borderRadius: 12, border: `1px solid ${C.green}15`, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.green}10, ${C.green}04)`, borderBottom: `1px solid ${C.green}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 15 }}>📝</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Assignment & Notes</span>
+              </div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                <EF label="Assigned Counselor" value={contact.assigned_counselor} field="assigned_counselor" onSave={saveContactField} options={counselors.length > 0 ? counselors : ['Admin']} />
+              </div>
+              <div>
+                <EF label="Notes" value={contact.notes} field="notes" onSave={saveContactField} type="textarea" placeholder="Contact notes..." />
+              </div>
+            </div>
+
+            <div style={{ padding: '10px 0', fontSize: 10, color: C.slateLight }}>
+              Created: {fmtDate(contact.created_at)} · Updated: {fmtDate(contact.updated_at)}
+            </div>
+          </div>
+
+          {/* Right: Leads from this contact */}
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.dark, fontFamily: FONT }}>Leads ({(contact.leads || []).length})</div>
+              <button onClick={() => setShowCreateLead(true)} style={{ ...btnSmallTeal, fontSize: 11 }}>+ New Lead</button>
+            </div>
+
+            {/* Create Lead Form */}
+            {showCreateLead && (
+              <div style={{ background: C.orangeBg, border: `1.5px solid ${C.orange}30`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.orange, marginBottom: 10, fontFamily: FONT }}>Create New Lead for {contact.first_name}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                  <div><label style={lblSm}>Service Type</label><input value={newLeadData.service_type} onChange={e => setNewLeadData({...newLeadData, service_type: e.target.value})} placeholder="e.g. Medical Tourism" style={inputSmall} /></div>
+                  <div><label style={lblSm}>Treatment Sought</label><input value={newLeadData.treatment_sought} onChange={e => setNewLeadData({...newLeadData, treatment_sought: e.target.value})} placeholder="e.g. Cardiac Surgery" style={inputSmall} /></div>
+                </div>
+                <div style={{ marginBottom: 8 }}><label style={lblSm}>Message / Notes</label><textarea value={newLeadData.message} onChange={e => setNewLeadData({...newLeadData, message: e.target.value})} placeholder="Initial enquiry details..." style={{ ...inputSmall, minHeight: 60, resize: 'vertical' }} /></div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <label style={lblSm}>Priority:</label>
+                  {PRIORITIES.map(p => (
+                    <button key={p.key} onClick={() => setNewLeadData({...newLeadData, priority: p.key})} style={{ padding: '3px 10px', borderRadius: 5, border: `1.5px solid ${newLeadData.priority === p.key ? p.color : C.border}`, background: newLeadData.priority === p.key ? `${p.color}15` : C.white, color: newLeadData.priority === p.key ? p.color : C.slate, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{p.label}</button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={handleCreateLead} disabled={creating} style={{ ...btnSmallTeal, opacity: creating ? 0.6 : 1 }}>{creating ? 'Creating...' : 'Create Lead'}</button>
+                  <button onClick={() => setShowCreateLead(false)} style={btnSmallGhost}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {/* Leads list */}
+            {(contact.leads || []).length === 0 && !showCreateLead && (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: C.slateLight }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>No leads yet</div>
+                <div style={{ fontSize: 11, marginBottom: 12 }}>Create a lead to start tracking this contact's enquiries.</div>
+                <button onClick={() => setShowCreateLead(true)} style={btnSmallTeal}>+ Create First Lead</button>
+              </div>
+            )}
+
+            {(contact.leads || []).map(lead => (
+              <div key={lead.lead_id} onClick={() => { openDetail(lead); }} style={{ background: `linear-gradient(135deg, ${C.white}, ${C.offWhite})`, borderRadius: 10, border: `1px solid ${C.borderLight}`, padding: '12px 14px', marginBottom: 8, cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange + '40'; e.currentTarget.style.boxShadow = `0 2px 8px ${C.orange}10`; }} onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{lead.treatment_sought || lead.service_type || 'Enquiry'}</div>
+                    <div style={{ fontSize: 10, color: C.slateLight, fontFamily: 'monospace' }}>{lead.lead_id}</div>
+                  </div>
+                  <StatusBadge status={lead.status} small />
+                </div>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, color: C.slate }}>
+                  <span><PriorityDot priority={lead.priority} /> {lead.priority || 'medium'}</span>
+                  {lead.urgency_level && <span style={{ color: URGENCY_COLORS[lead.urgency_level] || C.slate }}>⚡ {lead.urgency_level}</span>}
+                  <span>👤 {lead.assigned_counselor || '—'}</span>
+                  <span style={{ marginLeft: 'auto', color: C.slateLight }}>{timeAgo(lead.created_at)}</span>
+                </div>
+                {lead.message && <div style={{ fontSize: 11, color: C.slateDark, marginTop: 6, padding: '6px 8px', background: '#fffbf5', borderRadius: 6, borderLeft: `3px solid ${C.amber}`, lineHeight: 1.4 }}>{lead.message.substring(0, 120)}{lead.message.length > 120 ? '...' : ''}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ---- LOADING / LAYOUT ----
   if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.offWhite }}><div style={{ textAlign: 'center' }}><img src={LOGO_URL} alt="Loading" style={{ height: 40, borderRadius: 8, marginBottom: 8 }} /><div style={{ color: C.slateLight, fontSize: 12, fontFamily: FONT }}>Loading...</div></div></div>;
 
@@ -1387,6 +1656,8 @@ function CRMApp({ user, onLogout }) {
           {view === 'analytics' && <Analytics />}
           {view === 'scheduling' && <Scheduling />}
           {view === 'detail' && <DetailView />}
+          {view === 'contacts' && <ContactsList />}
+          {view === 'contact_detail' && <ContactDetail />}
           {view === 'settings' && <Settings />}
         </div>
       </div>

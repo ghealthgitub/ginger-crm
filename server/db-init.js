@@ -105,6 +105,22 @@ async function initDB() {
       "patient_isd VARCHAR(10)",
       "review_rating INTEGER",
       "review_text TEXT",
+      // Phase 1 — March 2026: new fields
+      "patient_name VARCHAR(200)",
+      "patient_gender VARCHAR(20)",
+      "services_given TEXT DEFAULT '[]'",
+      "opportunity_size VARCHAR(20)",
+      "stage VARCHAR(30)",
+      "recommended_hospitals_text TEXT",
+      "recommended_doctors_text TEXT",
+      "passport_number VARCHAR(50)",
+      "visa_number VARCHAR(50)",
+      "hospital_reg_number VARCHAR(50)",
+      "date_first_consultation DATE",
+      "admitting_doctor VARCHAR(200)",
+      "date_admission DATE",
+      "date_discharge DATE",
+      "final_bill DECIMAL(12,2)",
     ];
     for (const col of newCols) {
       await client.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS ${col}`);

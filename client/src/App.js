@@ -66,6 +66,45 @@ const DOCTOR_OPTIONS = [
   'Dr. S. Hukku (Oncology)', 'Dr. K. Srinath Reddy (Cardiology)',
 ];
 
+const STAGES = [
+  { key: 'new', label: 'New', color: C.blue },
+  { key: 'hot', label: 'Hot', color: C.red },
+  { key: 'arrived', label: 'Arrived', color: C.green },
+  { key: 'p1', label: 'P1 (Priority)', color: C.orange },
+  { key: 'p2', label: 'P2', color: C.amber },
+  { key: 'p3', label: 'P3', color: C.purple },
+  { key: 'closed_won', label: 'Closed Won', color: '#10b981' },
+  { key: 'cold', label: 'Cold Cases', color: C.slateLight },
+  { key: 'drop', label: 'Drop', color: C.slate },
+];
+
+const SERVICES_OPTIONS = [
+  'Initial Chat', 'Detailed Chat', 'Call Done', 'TP Given', 'VIL Given',
+  'Visa Assisted', 'Pickup Arranged', 'Hotel Booked', 'Pickup Done', 'Hospital Assistance',
+];
+
+const COUNTRY_LIST = [
+  'Afghanistan','Albania','Algeria','Angola','Argentina','Armenia','Australia','Austria','Azerbaijan',
+  'Bahamas','Bahrain','Bangladesh','Barbados','Belarus','Belgium','Benin','Bhutan','Bolivia',
+  'Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso','Burundi',
+  'Cambodia','Cameroon','Canada','Chad','Chile','China','Colombia','Congo (DRC)','Congo (Republic)',
+  'Costa Rica','Croatia','Cuba','Cyprus','Czech Republic','Denmark','Dominican Republic','Ecuador',
+  'Egypt','El Salvador','Eritrea','Estonia','Ethiopia','Fiji','Finland','France','Gabon','Gambia',
+  'Georgia','Germany','Ghana','Greece','Guatemala','Guinea','Guyana','Haiti','Honduras','Hungary',
+  'Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Ivory Coast','Jamaica',
+  'Japan','Jordan','Kazakhstan','Kenya','Kosovo','Kuwait','Kyrgyzstan','Laos','Latvia','Lebanon',
+  'Liberia','Libya','Lithuania','Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali',
+  'Malta','Mauritania','Mauritius','Mexico','Moldova','Mongolia','Montenegro','Morocco','Mozambique',
+  'Myanmar','Namibia','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria',
+  'North Korea','North Macedonia','Norway','Oman','Pakistan','Palestine','Panama','Papua New Guinea',
+  'Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia','Rwanda',
+  'Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore','Slovakia','Slovenia',
+  'Somalia','South Africa','South Korea','South Sudan','Spain','Sri Lanka','Sudan','Suriname',
+  'Sweden','Switzerland','Syria','Taiwan','Tajikistan','Tanzania','Thailand','Togo',
+  'Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Uganda','Ukraine','UAE','UK','USA',
+  'Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe',
+];
+
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -777,14 +816,12 @@ function CRMApp({ user, onLogout }) {
 
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (<>
-            {/* Source */}
+            {/* Lead Source */}
             <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.blue}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
               <div style={{ padding: '8px 14px', background: `${C.blue}06`, borderBottom: `1px solid ${C.blue}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>🔗</span><span style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Lead Source</span></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
-                <div style={{ padding: '8px 14px', borderRight: `1px solid ${C.borderLight}` }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, color: C.dark, fontWeight: 500 }}>{lead.page_title || '—'}</div></div>
-                <div style={{ padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
-              </div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, color: C.dark, fontWeight: 500 }}>{lead.page_title || '—'}</div></div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
               <div style={{ padding: '6px 14px', background: `${C.blue}03`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.slateLight }}><span>Enquiry: {fmtDate(lead.created_at)}</span><span style={{ fontFamily: 'monospace', fontSize: 10 }}>ID: {lead.lead_id}</span></div>
             </div>
 
@@ -793,36 +830,49 @@ function CRMApp({ user, onLogout }) {
               <div style={{ padding: '8px 14px', background: `${C.orange}06`, borderBottom: `1px solid ${C.orange}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>👤</span><span style={{ fontSize: 11, fontWeight: 700, color: C.orange, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Enquirer</span></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} /><EF label="First Name" value={lead.first_name} field="first_name" onSave={saveField} /><EF label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Email" value={lead.email} field="email" onSave={saveField} type="email" /><EF label="ISD" value={lead.isd} field="isd" onSave={saveField} /><EF label="Phone" value={lead.phone} field="phone" onSave={saveField} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} /><EF label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} /><EF label="Patient Relation" value={lead.patient_relation} field="patient_relation" onSave={saveField} options={['self', 'family_member', 'friend', 'doctor_referral', 'agent']} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} /><EF label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} /><EF label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Self','Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} /></div>
             </div>
 
-            {/* Patient */}
-            {lead.patient_relation !== 'self' && <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.purple}12`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.purple}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '8px 14px', background: `${C.purple}06`, borderBottom: `1px solid ${C.purple}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>🏥</span><span style={{ fontSize: 11, fontWeight: 700, color: C.purple, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Patient Details</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} /><EF label="First Name" value={lead.patient_first_name} field="patient_first_name" onSave={saveField} /><EF label="Last Name" value={lead.patient_last_name} field="patient_last_name" onSave={saveField} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} /><EF label="Email" value={lead.patient_email} field="patient_email" onSave={saveField} type="email" /><EF label="Phone" value={lead.patient_phone} field="patient_phone" onSave={saveField} /></div>
+            {/* Initial Message */}
+            {lead.message && <div style={{ background: C.white, borderRadius: 10, border: `1px solid #fde68a`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px rgba(251,191,36,0.12)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+              <div style={{ padding: '8px 14px', background: '#fefce8', borderBottom: `1px solid #fde68a`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>💬</span><span style={{ fontSize: 11, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Initial Message</span></div>
+              <div style={{ padding: '12px 16px', fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.6, background: '#fffef5' }}>{lead.message}</div>
             </div>}
 
-            {/* Medical */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.red}12`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.red}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '8px 14px', background: `${C.red}04`, borderBottom: `1px solid ${C.red}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>🩺</span><span style={{ fontSize: 11, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Medical</span></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies..." /></div>
-              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} type="textarea" /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}><EF label="Referred Hospitals" value={lead.referred_hospitals} field="referred_hospitals" onSave={saveField} multiOptions={HOSPITAL_OPTIONS} /><EF label="Recommended Doctors" value={lead.recommended_doctors} field="recommended_doctors" onSave={saveField} multiOptions={DOCTOR_OPTIONS} /></div>
+            {/* Patient Details */}
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.purple}12`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.purple}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+              <div style={{ padding: '8px 14px', background: `${C.purple}06`, borderBottom: `1px solid ${C.purple}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>🏥</span><span style={{ fontSize: 11, fontWeight: 700, color: C.purple, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Patient Details</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Patient Name" value={lead.patient_name || ((lead.patient_first_name || '') + ' ' + (lead.patient_last_name || '')).trim() || null} field="patient_name" onSave={saveField} /><EF label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} /><EF label="Gender" value={lead.patient_gender} field="patient_gender" onSave={saveField} options={['Male','Female','Other']} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Nationality" value={lead.patient_nationality} field="patient_nationality" onSave={saveField} options={COUNTRY_LIST} /><EF label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} /></div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." /></div>
+              <div><EF label="Treatment Needed" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} /></div>
             </div>
 
-            {/* Inquiry */}
-            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.blue}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '8px 14px', background: `${C.blue}06`, borderBottom: `1px solid ${C.blue}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>💬</span><span style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Inquiry</span></div>
-              {lead.message && <div style={{ padding: '10px 14px', background: '#fefce8', borderBottom: `1px solid #fde68a` }}><div style={{ fontSize: 10, color: '#92400e', fontWeight: 700, textTransform: 'uppercase', marginBottom: 3 }}>Patient Message</div><div style={{ fontSize: 14, color: C.dark, fontWeight: 500, lineHeight: 1.5 }}>{lead.message}</div></div>}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Service Type" value={lead.service_type} field="service_type" onSave={saveField} options={['Medical Treatment','Second Opinion','Wellness & Checkup','Dental','IVF / Fertility','Cosmetic Surgery','Organ Transplant','Cardiac','Orthopedic','Oncology','Neurology','Other']} /><EF label="Treatment Sought" value={lead.treatment_sought} field="treatment_sought" onSave={saveField} /><EF label="Urgency" value={lead.urgency_level} field="urgency_level" onSave={saveField} options={['Emergency','Urgent','Semi-Urgent','Routine']} /></div>
-              <div><EF label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add clinical notes..." /></div>
-            </div>
-
-            {/* Travel */}
+            {/* Counselor Notes */}
             <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.green}12`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.green}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '8px 14px', background: `${C.green}04`, borderBottom: `1px solid ${C.green}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>✈️</span><span style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Travel</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Est. Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" /><EF label="Est. Departure" value={lead.estimated_departure?.split('T')[0]} field="estimated_departure" onSave={saveField} type="date" /><EF label="Currency" value={lead.billing_currency} field="billing_currency" onSave={saveField} options={['USD','INR','AED','EUR','GBP','SAR','QAR','KWD','BHD','OMR']} /></div>
+              <div style={{ padding: '8px 14px', background: `${C.green}04`, borderBottom: `1px solid ${C.green}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>📝</span><span style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Counselor Notes</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Recommended Hospitals" value={lead.recommended_hospitals_text} field="recommended_hospitals_text" onSave={saveField} /><EF label="Recommended Doctors" value={lead.recommended_doctors_text} field="recommended_doctors_text" onSave={saveField} /></div>
+              <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Services Given" value={lead.services_given} field="services_given" onSave={saveField} multiOptions={SERVICES_OPTIONS} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}><EF label="Opportunity Size" value={lead.opportunity_size} field="opportunity_size" onSave={saveField} options={['Small','Medium','Large']} /><EF label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add observations..." /></div>
+            </div>
+
+            {/* Stage (Pipeline) */}
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.borderLight}`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+              <div style={{ padding: '8px 14px', background: `${C.navy}08`, borderBottom: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>📊</span><span style={{ fontSize: 11, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Stage</span></div>
+              <div style={{ padding: '10px 14px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {STAGES.map(st => {
+                  const active = (lead.stage || 'new') === st.key;
+                  return <button key={st.key} onClick={() => saveField('stage', st.key)} style={{ padding: '6px 14px', borderRadius: 6, border: `2px solid ${active ? st.color : C.border}`, background: active ? `${st.color}15` : C.white, color: active ? st.color : C.slate, fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: FONT, transition: 'all 0.15s' }}>{st.label}</button>;
+                })}
+              </div>
+            </div>
+
+            {/* Mapping Details */}
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.cyan}12`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${C.cyan}08`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+              <div style={{ padding: '8px 14px', background: `${C.cyan}06`, borderBottom: `1px solid ${C.cyan}10`, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 13 }}>🗂️</span><span style={{ fontSize: 11, fontWeight: 700, color: C.cyan, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FONT }}>Mapping Details</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Passport Number" value={lead.passport_number} field="passport_number" onSave={saveField} /><EF label="Visa Number" value={lead.visa_number} field="visa_number" onSave={saveField} /><EF label="Hospital Reg No." value={lead.hospital_reg_number} field="hospital_reg_number" onSave={saveField} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Date of Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" /><EF label="Date of First Consultation" value={lead.date_first_consultation?.split('T')[0]} field="date_first_consultation" onSave={saveField} type="date" /><EF label="Admitting Doctor" value={lead.admitting_doctor} field="admitting_doctor" onSave={saveField} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Date of Admission" value={lead.date_admission?.split('T')[0]} field="date_admission" onSave={saveField} type="date" /><EF label="Date of Discharge" value={lead.date_discharge?.split('T')[0]} field="date_discharge" onSave={saveField} type="date" /><EF label="Final Bill" value={lead.final_bill} field="final_bill" onSave={saveField} type="number" /></div>
             </div>
           </>)}
 

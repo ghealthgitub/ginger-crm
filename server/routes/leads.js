@@ -548,6 +548,11 @@ router.patch('/:leadId', auth, async (req, res) => {
       'billing_amount', 'billing_currency', 'billing_status',
       'estimated_arrival', 'estimated_departure', 'accommodation_notes',
       'review_rating', 'review_text',
+      // Phase 1 new fields
+      'patient_name', 'patient_gender', 'services_given', 'opportunity_size', 'stage',
+      'recommended_hospitals_text', 'recommended_doctors_text',
+      'passport_number', 'visa_number', 'hospital_reg_number',
+      'date_first_consultation', 'admitting_doctor', 'date_admission', 'date_discharge', 'final_bill',
     ];
     const updates = [];
     const params = [];

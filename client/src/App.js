@@ -772,9 +772,16 @@ function CRMApp({ user, onLogout }) {
 
   // ---- PIPELINE ----
   const Pipeline = () => (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <Toolbar />
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10 }}>
+      <style>{`
+        .pipeline-scroll::-webkit-scrollbar { height: 16px; }
+        .pipeline-scroll::-webkit-scrollbar-track { background: #cbd5e1; border-radius: 8px; }
+        .pipeline-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 8px; border: 3px solid #cbd5e1; min-width: 60px; }
+        .pipeline-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .pipeline-scroll { scrollbar-width: auto; scrollbar-color: #64748b #cbd5e1; }
+      `}</style>
+      <div className="pipeline-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', overflowY: 'auto', flex: 1, minHeight: 0, paddingBottom: 4, alignItems: 'flex-start' }}>
         {STAGES.map(stage => {
           const col = leads.filter(l => (l.stage || 'new') === stage.key);
           return (
@@ -1717,7 +1724,7 @@ function CRMApp({ user, onLogout }) {
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <TopBar />
-        <div style={{ flex: 1, overflow: 'auto', padding: '18px 22px' }}>
+        <div style={{ flex: 1, overflow: view === 'pipeline' ? 'hidden' : 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column' }}>
           {view === 'dashboard' && <Dashboard />}
           {view === 'leads' && <LeadsList />}
           {view === 'pipeline' && <Pipeline />}

@@ -1707,7 +1707,7 @@ function CRMApp({ user, onLogout }) {
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <TopBar />
-        <div style={{ flex: 1, overflow: view === 'pipeline' ? 'hidden' : 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflow: view === 'pipeline' ? 'hidden' : 'auto', padding: '18px 22px', ...(view === 'pipeline' ? { display: 'flex', flexDirection: 'column' } : {}) }}>
           {view === 'dashboard' && <Dashboard />}
           {view === 'leads' && <LeadsList />}
           {view === 'pipeline' && <Pipeline />}

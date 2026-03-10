@@ -851,8 +851,8 @@ function CRMApp({ user, onLogout }) {
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (<>
             {/* Lead Source */}
-            <div style={{ background: `linear-gradient(135deg, #f0f7ff, #fafcff)`, borderRadius: 12, border: `1px solid ${C.blue}18`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 20px ${C.blue}12`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.blue}10, ${C.blue}05)`, borderBottom: `1px solid ${C.blue}12`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>🔗</span><span style={{ fontSize: 12, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Lead Source</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🔗</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Lead Source</span></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, fontWeight: 600 }}>{lead.page_url ? <a href={cleanUrl(lead.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none', borderBottom: `1px dashed ${C.blue}40` }}>{lead.page_title || 'View Page'}</a> : <span style={{ color: C.dark }}>{lead.page_title || '—'}</span>}</div></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
@@ -864,22 +864,22 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Enquirer */}
-            <div style={{ background: `linear-gradient(135deg, #fff8f3, #fffcfa)`, borderRadius: 12, border: `1px solid ${C.orange}15`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 20px ${C.orange}12`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.orange}10, ${C.orange}04)`, borderBottom: `1px solid ${C.orange}12`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>👤</span><span style={{ fontSize: 12, fontWeight: 800, color: C.orange, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Enquirer</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>👤</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Enquirer</span></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Title" value={lead.prefix} field="prefix" onSave={saveField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} /><EF label="First Name" value={lead.first_name} field="first_name" onSave={saveField} /><EF label="Last Name" value={lead.last_name} field="last_name" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Email" value={lead.email} field="email" onSave={saveField} type="email" /><EF label="ISD" value={lead.isd} field="isd" onSave={saveField} /><EF label="Phone" value={lead.phone} field="phone" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Nationality" value={lead.nationality} field="nationality" onSave={saveField} /><EF label="Contact Via" value={lead.contact_preference} field="contact_preference" onSave={saveField} options={['whatsapp', 'telegram', 'email', 'phone', 'pending']} /><EF label="Relationship" value={lead.relationship_type} field="relationship_type" onSave={saveField} options={['Self','Spouse','Parent','Child','Sibling','Friend','Doctor','Agent','Other']} /></div>
             </div>
 
             {/* Initial Message */}
-            {lead.message && <div style={{ background: C.white, borderRadius: 10, border: `1px solid #fde68a`, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow 0.2s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px rgba(251,191,36,0.12)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #fef9e7, #fefce8)', borderBottom: `1px solid #fde68a`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 16 }}>💬</span><span style={{ fontSize: 12, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Initial Message</span></div>
-              <div style={{ padding: '14px 18px', fontSize: 15, color: '#78350f', fontWeight: 500, lineHeight: 1.7, background: 'linear-gradient(135deg, #fffef5, #fffdf0)', fontStyle: 'italic', borderLeft: '4px solid #f59e0b' }}>"{lead.message}"</div>
+            {lead.message && <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>💬</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Initial Message</span></div>
+              <div style={{ padding: '16px 20px', fontSize: 15, color: C.slateDark, fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', borderLeft: `4px solid ${C.orange}`, background: C.offWhite }}>"{lead.message}"</div>
             </div>}
 
             {/* Patient Details */}
-            <div style={{ background: `linear-gradient(135deg, #faf5ff, #fcfaff)`, borderRadius: 12, border: `1px solid ${C.purple}15`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 20px ${C.purple}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.purple}10, ${C.purple}04)`, borderBottom: `1px solid ${C.purple}12`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>🏥</span><span style={{ fontSize: 12, fontWeight: 800, color: C.purple, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Patient Details</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🏥</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Patient Details</span></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Patient Name" value={lead.patient_name || ((lead.patient_first_name || '') + ' ' + (lead.patient_last_name || '')).trim() || null} field="patient_name" onSave={saveField} /><EF label="Age" value={lead.patient_age} field="patient_age" onSave={saveField} /><EF label="Gender" value={lead.patient_gender} field="patient_gender" onSave={saveField} options={['Male','Female','Other']} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Nationality" value={lead.patient_nationality} field="patient_nationality" onSave={saveField} options={COUNTRY_LIST} /><EF label="Primary Diagnosis" value={lead.primary_diagnosis} field="primary_diagnosis" onSave={saveField} /></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Medical History" value={lead.medical_history} field="medical_history" onSave={saveField} type="textarea" placeholder="Previous treatments, allergies, conditions..." /></div>
@@ -887,27 +887,27 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Counselor Notes */}
-            <div style={{ background: `linear-gradient(135deg, #f0fdf4, #fafffe)`, borderRadius: 12, border: `1px solid ${C.green}15`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 20px ${C.green}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.green}10, ${C.green}04)`, borderBottom: `1px solid ${C.green}12`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>📝</span><span style={{ fontSize: 12, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Counselor Notes</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📝</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Counselor Notes</span></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Recommended Hospitals" value={lead.recommended_hospitals_text} field="recommended_hospitals_text" onSave={saveField} /><EF label="Recommended Doctors" value={lead.recommended_doctors_text} field="recommended_doctors_text" onSave={saveField} /></div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}` }}><EF label="Services Given" value={lead.services_given} field="services_given" onSave={saveField} multiOptions={SERVICES_OPTIONS} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}><EF label="Opportunity Size" value={lead.opportunity_size} field="opportunity_size" onSave={saveField} options={['Small','Medium','Large']} /><EF label="Clinical Notes" value={lead.clinical_notes} field="clinical_notes" onSave={saveField} type="textarea" placeholder="Add observations..." /></div>
             </div>
 
             {/* Stage (Pipeline) */}
-            <div style={{ background: `linear-gradient(135deg, #f0f4f8, #f8fafc)`, borderRadius: 12, border: `1px solid ${C.navy}12`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,49,90,0.08)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.navy}08, ${C.navy}03)`, borderBottom: `1px solid ${C.navy}10`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>📊</span><span style={{ fontSize: 12, fontWeight: 800, color: C.navy, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Pipeline Stage</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>📊</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Pipeline Stage</span></div>
               <div style={{ padding: '10px 14px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {STAGES.map(st => {
                   const active = (lead.stage || 'new') === st.key;
-                  return <button key={st.key} onClick={() => saveField('stage', st.key)} style={{ padding: '7px 16px', borderRadius: 20, border: `2px solid ${active ? st.color : C.border}`, background: active ? `${st.color}18` : C.white, color: active ? st.color : C.slate, fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s', boxShadow: active ? `0 2px 8px ${st.color}20` : 'none' }} onMouseEnter={e => { if (!active) { e.target.style.borderColor = st.color; e.target.style.color = st.color; }}} onMouseLeave={e => { if (!active) { e.target.style.borderColor = C.border; e.target.style.color = C.slate; }}}>{st.label}</button>;
+                  return <button key={st.key} onClick={() => saveField('stage', st.key)} style={{ padding: '7px 16px', borderRadius: 20, border: `2px solid ${active ? st.color : C.border}`, background: active ? `${st.color}18` : C.white, color: active ? st.color : C.slate, fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s' }} onMouseEnter={e => { if (!active) { e.target.style.borderColor = st.color; e.target.style.color = st.color; }}} onMouseLeave={e => { if (!active) { e.target.style.borderColor = C.border; e.target.style.color = C.slate; }}}>{st.label}</button>;
                 })}
               </div>
             </div>
 
             {/* Mapping Details */}
-            <div style={{ background: `linear-gradient(135deg, #ecfeff, #f8fffe)`, borderRadius: 12, border: `1px solid ${C.cyan}15`, marginBottom: 14, overflow: 'hidden', transition: 'all 0.25s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 20px ${C.cyan}10`} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.cyan}10, ${C.cyan}04)`, borderBottom: `1px solid ${C.cyan}10`, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>🗂️</span><span style={{ fontSize: 12, fontWeight: 800, color: C.cyan, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Mapping Details</span></div>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🗂️</span><span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Mapping Details</span></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Passport Number" value={lead.passport_number} field="passport_number" onSave={saveField} /><EF label="Visa Number" value={lead.visa_number} field="visa_number" onSave={saveField} /><EF label="Hospital Reg No." value={lead.hospital_reg_number} field="hospital_reg_number" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}><EF label="Date of Arrival" value={lead.estimated_arrival?.split('T')[0]} field="estimated_arrival" onSave={saveField} type="date" /><EF label="Date of First Consultation" value={lead.date_first_consultation?.split('T')[0]} field="date_first_consultation" onSave={saveField} type="date" /><EF label="Admitting Doctor" value={lead.admitting_doctor} field="admitting_doctor" onSave={saveField} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}><EF label="Date of Admission" value={lead.date_admission?.split('T')[0]} field="date_admission" onSave={saveField} type="date" /><EF label="Date of Discharge" value={lead.date_discharge?.split('T')[0]} field="date_discharge" onSave={saveField} type="date" /><EF label="Final Bill" value={lead.final_bill} field="final_bill" onSave={saveField} type="number" /></div>
@@ -1521,10 +1521,10 @@ function CRMApp({ user, onLogout }) {
           {/* Left: Contact Info */}
           <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.borderLight}` }}>
             {/* Contact Details Card */}
-            <div style={{ background: `linear-gradient(135deg, #ecfeff, #f0fdfa)`, borderRadius: 12, border: `1px solid ${C.cyan}18`, marginBottom: 14, overflow: 'hidden' }}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.cyan}10, ${C.cyan}04)`, borderBottom: `1px solid ${C.cyan}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 15 }}>👤</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: C.cyan, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Contact Details</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Contact Details</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${C.borderLight}` }}>
                 <EF label="Title" value={contact.prefix} field="prefix" onSave={saveContactField} options={['Mr.', 'Mrs.', 'Ms.', 'Dr.']} />
@@ -1544,10 +1544,10 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Source */}
-            <div style={{ background: `linear-gradient(135deg, #f0f7ff, #fafcff)`, borderRadius: 12, border: `1px solid ${C.blue}18`, marginBottom: 14, overflow: 'hidden' }}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.blue}10, ${C.blue}05)`, borderBottom: `1px solid ${C.blue}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 15 }}>🔗</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Source</span>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>🔗</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Source</span>
               </div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: '8px 14px' }}>
                 <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page URL</div>
@@ -1560,10 +1560,10 @@ function CRMApp({ user, onLogout }) {
             </div>
 
             {/* Counselor & Notes */}
-            <div style={{ background: `linear-gradient(135deg, #f0fdf4, #fafffe)`, borderRadius: 12, border: `1px solid ${C.green}15`, overflow: 'hidden' }}>
-              <div style={{ padding: '10px 16px', background: `linear-gradient(135deg, ${C.green}10, ${C.green}04)`, borderBottom: `1px solid ${C.green}12`, display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 15 }}>📝</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: 1, fontFamily: FONT }}>Assignment & Notes</span>
+            <div style={{ background: C.white, borderRadius: 10, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>📝</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, fontFamily: FONT }}>Assignment & Notes</span>
               </div>
               <div style={{ borderBottom: `1px solid ${C.borderLight}` }}>
                 <EF label="Assigned Counselor" value={contact.assigned_counselor} field="assigned_counselor" onSave={saveContactField} options={counselors.length > 0 ? counselors : ['Admin']} />

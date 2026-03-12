@@ -338,4 +338,36 @@ router.delete('/schedule-overrides/:id', auth, managerOrAdmin, async (req, res) 
   }
 });
 
+// ============================================================
+// USER PREFERENCES (per-user key-value store)
+// ============================================================
+router.get('/preferences/:key', auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT pref_value FROM user_preferences WHERE user_id = $1 AND pref_key = $2',
+      [req.user.id, req.params.key]
+    );
+    if (result.rows.length === 0) return res.json({ value: null });
+    res.json({ value: result.rows[0].pref_value });
+  } catch (e) {
+    console.error('Get preference error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.put('/preferences/:key', auth, async (req, res) => {
+  try {
+    const { value } = req.body;
+    await pool.query(`
+      INSERT INTO user_preferences (user_id, pref_key, pref_value, updated_at)
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (user_id, pref_key) DO UPDATE SET pref_value = $3, updated_at = NOW()
+    `, [req.user.id, req.params.key, value]);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Set preference error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

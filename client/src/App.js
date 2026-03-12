@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { authApi, leadsApi, usersApi, schedulesApi, contactsApi } from './utils/api';
+import { authApi, leadsApi, usersApi, schedulesApi, contactsApi, prefsApi } from './utils/api';
 
 // ============================================================
 // BRAND & DESIGN SYSTEM
@@ -777,6 +777,32 @@ function CRMApp({ user, onLogout }) {
   const [stageOrder, setStageOrder] = useState(() => STAGES.map(s => s.key));
   const [dragCol, setDragCol] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
+  const stageOrderLoaded = React.useRef(false);
+
+  // Load saved order on mount
+  useEffect(() => {
+    if (stageOrderLoaded.current) return;
+    stageOrderLoaded.current = true;
+    prefsApi.get('pipeline_stage_order').then(res => {
+      if (res?.value) {
+        try {
+          const saved = JSON.parse(res.value);
+          // Merge: use saved order but include any new stages not in saved
+          const allKeys = STAGES.map(s => s.key);
+          const valid = saved.filter(k => allKeys.includes(k));
+          const missing = allKeys.filter(k => !valid.includes(k));
+          if (valid.length > 0) setStageOrder([...valid, ...missing]);
+        } catch (e) { /* ignore bad data */ }
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Save order when it changes (skip initial load)
+  const stageOrderInitial = React.useRef(true);
+  useEffect(() => {
+    if (stageOrderInitial.current) { stageOrderInitial.current = false; return; }
+    prefsApi.set('pipeline_stage_order', JSON.stringify(stageOrder)).catch(() => {});
+  }, [stageOrder]);
 
   const orderedStages = stageOrder.map(key => STAGES.find(s => s.key === key)).filter(Boolean);
 

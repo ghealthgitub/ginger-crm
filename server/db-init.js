@@ -195,7 +195,7 @@ async function initDB() {
     for (const c of ['India','Bangladesh','Pakistan']) { await client.query(`INSERT INTO blocked_countries (country_name) VALUES ($1) ON CONFLICT DO NOTHING`, [c]); }
     await client.query(`CREATE TABLE IF NOT EXISTS counselor_schedules (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), slot_start TIME NOT NULL, slot_end TIME NOT NULL, is_active BOOLEAN DEFAULT true, created_by VARCHAR(100) NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(user_id, day_of_week, slot_start))`);
     await client.query(`CREATE TABLE IF NOT EXISTS schedule_overrides (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, override_date DATE NOT NULL, is_off BOOLEAN DEFAULT true, slot_start TIME, slot_end TIME, reason VARCHAR(255), created_by VARCHAR(100) NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(user_id, override_date))`);
-
+    await client.query(`CREATE TABLE IF NOT EXISTS user_preferences (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, pref_key VARCHAR(100) NOT NULL, pref_value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(user_id, pref_key))`);
     // Indexes
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status)',

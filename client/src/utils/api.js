@@ -33,6 +33,11 @@ export const authApi = {
   changePassword: (currentPassword, newPassword) => api('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 };
 
+export const prefsApi = {
+  get: (key) => api(`/auth/preferences/${key}`),
+  set: (key, value) => api(`/auth/preferences/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+};
+
 export const usersApi = {
   list: () => api('/auth/users'),
   create: (data) => api('/auth/users', { method: 'POST', body: JSON.stringify(data) }),

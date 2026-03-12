@@ -330,7 +330,7 @@ function CRMApp({ user, onLogout }) {
 
   useEffect(() => {
     fetchData();
-    if (view === 'scheduling' || view === 'settings') return;
+    if (view === 'scheduling' || view === 'settings' || view === 'detail' || view === 'contact_detail') return;
     const iv = setInterval(fetchData, 30000);
     return () => clearInterval(iv);
   }, [fetchData, view]);

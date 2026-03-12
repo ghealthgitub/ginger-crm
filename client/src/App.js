@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { authApi, leadsApi, usersApi, schedulesApi, contactsApi, prefsApi } from './utils/api';
+import { authApi, leadsApi, usersApi, schedulesApi, contactsApi } from './utils/api';
 
 // ============================================================
 // BRAND & DESIGN SYSTEM
@@ -67,16 +67,17 @@ const DOCTOR_OPTIONS = [
 ];
 
 const STAGES = [
-  { key: 'new', label: 'New', color: C.blue },
-  { key: 'hot', label: 'Hot', color: C.red },
-  { key: 'arrived', label: 'Arrived', color: C.green },
-  { key: 'p1', label: 'P1 (Priority)', color: C.orange },
-  { key: 'p2', label: 'P2', color: C.amber },
-  { key: 'p3', label: 'P3', color: C.purple },
-  { key: 'closed_won', label: 'Closed Won', color: '#10b981' },
+  { key: 'new', label: 'New Cases', color: C.blue },
+  { key: 'arrived', label: 'Arrived Patients', color: C.green },
+  { key: 'hot', label: 'Hot Cases', color: C.red },
+  { key: 'p1', label: 'Priority 1 (P1)', color: C.orange },
+  { key: 'p2', label: 'Priority 2 (P2)', color: C.amber },
+  { key: 'p3', label: 'Priority 3 (P3)', color: C.purple },
   { key: 'cold', label: 'Cold Cases', color: C.slateLight },
-  { key: 'drop', label: 'Drop', color: C.slate },
-  { key: 'follow_up', label: 'Follow-Up', color: C.cyan },
+  { key: 'drop', label: 'Dropped Cases', color: C.slate },
+  { key: 'follow_up', label: 'Follow-Up Pending', color: C.cyan },
+  { key: 'closed_won', label: 'Closed Won', color: '#10b981' },
+  { key: 'post_treatment', label: 'Post-Treatment Care', color: '#6366f1' },
 ];
 
 const SERVICES_OPTIONS = [
@@ -773,39 +774,7 @@ function CRMApp({ user, onLogout }) {
     </div>
   );
 
-  // ---- PIPELINE (draggable columns) ----
-  const [stageOrder, setStageOrder] = useState(() => STAGES.map(s => s.key));
-  const [dragCol, setDragCol] = useState(null);
-  const [dragOverCol, setDragOverCol] = useState(null);
-  const stageOrderLoaded = React.useRef(false);
-
-  // Load saved order on mount
-  useEffect(() => {
-    if (stageOrderLoaded.current) return;
-    stageOrderLoaded.current = true;
-    prefsApi.get('pipeline_stage_order').then(res => {
-      if (res?.value) {
-        try {
-          const saved = JSON.parse(res.value);
-          // Merge: use saved order but include any new stages not in saved
-          const allKeys = STAGES.map(s => s.key);
-          const valid = saved.filter(k => allKeys.includes(k));
-          const missing = allKeys.filter(k => !valid.includes(k));
-          if (valid.length > 0) setStageOrder([...valid, ...missing]);
-        } catch (e) { /* ignore bad data */ }
-      }
-    }).catch(() => {});
-  }, []);
-
-  // Save order when it changes (skip initial load)
-  const stageOrderInitial = React.useRef(true);
-  useEffect(() => {
-    if (stageOrderInitial.current) { stageOrderInitial.current = false; return; }
-    prefsApi.set('pipeline_stage_order', JSON.stringify(stageOrder)).catch(() => {});
-  }, [stageOrder]);
-
-  const orderedStages = stageOrder.map(key => STAGES.find(s => s.key === key)).filter(Boolean);
-
+  // ---- PIPELINE ----
   const Pipeline = () => (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <Toolbar />
@@ -817,39 +786,12 @@ function CRMApp({ user, onLogout }) {
         .pipeline-scroll { scrollbar-width: auto; scrollbar-color: #64748b #cbd5e1; }
       `}</style>
       <div className="pipeline-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', overflowY: 'auto', flex: 1, minHeight: 0, paddingBottom: 4, alignItems: 'flex-start' }}>
-        {orderedStages.map(stage => {
+        {STAGES.map(stage => {
           const col = leads.filter(l => (l.stage || 'new') === stage.key);
-          const isDropTarget = dragOverCol === stage.key && dragCol !== stage.key;
           return (
-            <div key={stage.key}
-              onDragOver={e => { e.preventDefault(); if (dragCol) setDragOverCol(stage.key); }}
-              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
-              onDrop={e => {
-                e.preventDefault();
-                if (dragCol && dragCol !== stage.key) {
-                  setStageOrder(prev => {
-                    const arr = [...prev];
-                    const fromIdx = arr.indexOf(dragCol);
-                    const toIdx = arr.indexOf(stage.key);
-                    arr.splice(fromIdx, 1);
-                    arr.splice(toIdx, 0, dragCol);
-                    return arr;
-                  });
-                }
-                setDragCol(null); setDragOverCol(null);
-              }}
-              style={{ flex: '1 1 0', minWidth: 180, background: isDropTarget ? `${stage.color}08` : C.white, borderRadius: 12, padding: 10, fontFamily: FONT, border: isDropTarget ? `2px dashed ${stage.color}` : `1px solid ${C.border}`, transition: 'all 0.15s', opacity: dragCol === stage.key ? 0.5 : 1 }}>
-              <div
-                draggable
-                onDragStart={e => { setDragCol(stage.key); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', stage.key); }}
-                onDragEnd={() => { setDragCol(null); setDragOverCol(null); }}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, padding: '4px 6px', cursor: 'grab', borderRadius: 6, userSelect: 'none', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontSize: 11, fontWeight: 700, color: stage.color, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ color: '#9ca3af', fontSize: 10, cursor: 'grab' }}>⠿</span> {stage.label}
-                </span>
+            <div key={stage.key} style={{ flex: '1 1 0', minWidth: 180, background: C.white, borderRadius: 12, padding: 10, fontFamily: FONT, border: `1px solid ${C.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, padding: '0 4px' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: stage.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{stage.label}</span>
                 <span style={{ fontSize: 10, background: `${stage.color}15`, color: stage.color, padding: '1px 7px', borderRadius: 8, fontWeight: 700 }}>{col.length}</span>
               </div>
               {col.map(l => (

@@ -821,27 +821,28 @@ function CRMApp({ user, onLogout }) {
           const col = leads.filter(l => (l.stage || 'new') === stage.key);
           const isDropTarget = dragOverCol === stage.key && dragCol !== stage.key;
           return (
-            <div key={stage.key} style={{ flex: '1 1 0', minWidth: 180, background: C.white, borderRadius: 12, padding: 10, fontFamily: FONT, border: isDropTarget ? `2px dashed ${stage.color}` : `1px solid ${C.border}`, transition: 'border 0.15s', opacity: dragCol === stage.key ? 0.5 : 1 }}>
+            <div key={stage.key}
+              onDragOver={e => { e.preventDefault(); if (dragCol) setDragOverCol(stage.key); }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
+              onDrop={e => {
+                e.preventDefault();
+                if (dragCol && dragCol !== stage.key) {
+                  setStageOrder(prev => {
+                    const arr = [...prev];
+                    const fromIdx = arr.indexOf(dragCol);
+                    const toIdx = arr.indexOf(stage.key);
+                    arr.splice(fromIdx, 1);
+                    arr.splice(toIdx, 0, dragCol);
+                    return arr;
+                  });
+                }
+                setDragCol(null); setDragOverCol(null);
+              }}
+              style={{ flex: '1 1 0', minWidth: 180, background: isDropTarget ? `${stage.color}08` : C.white, borderRadius: 12, padding: 10, fontFamily: FONT, border: isDropTarget ? `2px dashed ${stage.color}` : `1px solid ${C.border}`, transition: 'all 0.15s', opacity: dragCol === stage.key ? 0.5 : 1 }}>
               <div
                 draggable
-                onDragStart={e => { setDragCol(stage.key); e.dataTransfer.effectAllowed = 'move'; }}
+                onDragStart={e => { setDragCol(stage.key); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', stage.key); }}
                 onDragEnd={() => { setDragCol(null); setDragOverCol(null); }}
-                onDragOver={e => { e.preventDefault(); setDragOverCol(stage.key); }}
-                onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
-                onDrop={e => {
-                  e.preventDefault();
-                  if (dragCol && dragCol !== stage.key) {
-                    setStageOrder(prev => {
-                      const arr = [...prev];
-                      const fromIdx = arr.indexOf(dragCol);
-                      const toIdx = arr.indexOf(stage.key);
-                      arr.splice(fromIdx, 1);
-                      arr.splice(toIdx, 0, dragCol);
-                      return arr;
-                    });
-                  }
-                  setDragCol(null); setDragOverCol(null);
-                }}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, padding: '4px 6px', cursor: 'grab', borderRadius: 6, userSelect: 'none', transition: 'background 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}

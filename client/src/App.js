@@ -193,7 +193,9 @@ const EF = ({ label, value, field, onSave, type = 'text', options, multiOptions,
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value || '');
   const [sm, setSm] = useState(() => { try { return JSON.parse(value || '[]'); } catch { return []; } });
-  useEffect(() => { setVal(value || ''); try { setSm(JSON.parse(value || '[]')); } catch { setSm([]); } }, [value]);
+  const editingRef = React.useRef(false);
+  editingRef.current = editing;
+  useEffect(() => { if (!editingRef.current) { setVal(value || ''); try { setSm(JSON.parse(value || '[]')); } catch { setSm([]); } } }, [value]);
   const save = () => { onSave(field, multiOptions ? JSON.stringify(sm) : val); setEditing(false); };
   const cancel = () => { setEditing(false); setVal(value || ''); };
   const iFull = { width: '100%', padding: '9px 12px', borderRadius: 6, border: `2px solid ${C.orange}50`, fontSize: 14, outline: 'none', fontFamily: FONT, color: C.dark, boxSizing: 'border-box', background: '#fffaf6' };
@@ -330,7 +332,8 @@ function CRMApp({ user, onLogout }) {
 
   useEffect(() => {
     fetchData();
-    if (view === 'scheduling' || view === 'settings' || view === 'detail' || view === 'contact_detail') return;
+    // Only auto-refresh on dashboard and list views, not detail/editing pages
+    if (view !== 'dashboard' && view !== 'leads' && view !== 'pipeline') return;
     const iv = setInterval(fetchData, 30000);
     return () => clearInterval(iv);
   }, [fetchData, view]);

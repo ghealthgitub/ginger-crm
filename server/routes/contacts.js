@@ -110,8 +110,8 @@ router.post('/', auth, async (req, res) => {
       INSERT INTO contacts (
         contact_id, prefix, first_name, last_name, email, isd, phone,
         nationality, contact_type, relationship_type, contact_preference,
-        assigned_counselor, notes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        assigned_counselor, notes, page_url, page_title, referrer
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING *
     `, [
       contactId,
@@ -127,6 +127,9 @@ router.post('/', auth, async (req, res) => {
       d.contact_preference || null,
       d.assigned_counselor || req.user.name,
       d.notes || null,
+      d.page_url || null,
+      d.page_title || null,
+      d.referrer || null,
     ]);
 
     res.json(result.rows[0]);

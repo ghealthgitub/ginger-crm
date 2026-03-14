@@ -308,7 +308,7 @@ function CRMApp({ user, onLogout }) {
   const fetchData = useCallback(async () => {
     try {
       const [leadsData, statsData, fuData] = await Promise.all([
-        leadsApi.list({ category: activeCategory, status: filterStatus !== 'all' ? filterStatus : undefined, counselor: filterCounselor !== 'all' ? filterCounselor : undefined, urgency: filterUrgency !== 'all' ? filterUrgency : undefined, search: search || undefined, sort: leadSort, order: leadOrder, limit: 200 }),
+        leadsApi.list({ category: activeCategory, stage: filterStatus !== 'all' ? filterStatus : undefined, counselor: filterCounselor !== 'all' ? filterCounselor : undefined, urgency: filterUrgency !== 'all' ? filterUrgency : undefined, search: search || undefined, sort: leadSort, order: leadOrder, limit: 200 }),
         leadsApi.stats(),
         leadsApi.followUps(),
       ]);
@@ -675,7 +675,7 @@ function CRMApp({ user, onLogout }) {
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads..." style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, background: 'transparent', color: C.dark, fontFamily: FONT }} />
         {search && <span style={{ cursor: 'pointer', color: C.slateLight, fontSize: 12 }} onClick={() => setSearch('')}>✕</span>}
       </div>
-      <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selStyle}><option value="all">All Status</option>{STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
+      <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selStyle}><option value="all">All Stages</option>{STAGES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
       {isAdminOrManager && <select value={filterCounselor} onChange={e => setFilterCounselor(e.target.value)} style={selStyle}><option value="all">All Counselors</option>{counselors.map(c => <option key={c} value={c}>{c}</option>)}</select>}
       <select value={filterUrgency} onChange={e => setFilterUrgency(e.target.value)} style={selStyle}><option value="all">All Urgency</option><option>Emergency</option><option>Urgent</option><option>Semi-Urgent</option><option>Routine</option></select>
       <select value={`${leadSort}|${leadOrder}`} onChange={e => { const parts = e.target.value.split('|'); setLeadSort(parts[0]); setLeadOrder(parts[1]); }} style={selStyle}>
@@ -1429,7 +1429,7 @@ function CRMApp({ user, onLogout }) {
 
   const ContactsList = () => {
     const [showAdd, setShowAdd] = useState(false);
-    const [newContact, setNewContact] = useState({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', notes: '' });
+    const [newContact, setNewContact] = useState({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', page_url: '', referrer: '', notes: '' });
     const [saving, setSaving] = useState(false);
 
     const handleAddContact = async () => {
@@ -1438,7 +1438,7 @@ function CRMApp({ user, onLogout }) {
       try {
         await contactsApi.create(newContact);
         setShowAdd(false);
-        setNewContact({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', notes: '' });
+        setNewContact({ prefix: '', first_name: '', last_name: '', email: '', isd: '', phone: '', nationality: '', contact_preference: '', page_url: '', referrer: '', notes: '' });
         fetchContacts();
       } catch (e) { console.error('Create contact failed:', e); }
       setSaving(false);
@@ -1479,6 +1479,10 @@ function CRMApp({ user, onLogout }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
             <div><label style={lblSm}>Nationality</label><select value={newContact.nationality} onChange={e => setNewContact({...newContact, nationality: e.target.value})} style={inputSmall}><option value="">Select country</option>{COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
             <div><label style={lblSm}>Contact Via</label><select value={newContact.contact_preference} onChange={e => setNewContact({...newContact, contact_preference: e.target.value})} style={inputSmall}><option value="">—</option><option value="whatsapp">WhatsApp</option><option value="phone">Phone</option><option value="email">Email</option><option value="telegram">Telegram</option></select></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div><label style={lblSm}>Source URL</label><input value={newContact.page_url} onChange={e => setNewContact({...newContact, page_url: e.target.value})} placeholder="https://ghealth121.com/..." style={inputSmall} /></div>
+            <div><label style={lblSm}>Referrer</label><input value={newContact.referrer} onChange={e => setNewContact({...newContact, referrer: e.target.value})} placeholder="e.g. Google, WhatsApp, Direct..." style={inputSmall} /></div>
           </div>
           <div style={{ marginBottom: 10 }}><label style={lblSm}>Notes</label><textarea value={newContact.notes} onChange={e => setNewContact({...newContact, notes: e.target.value})} placeholder="How did they reach out? Any context..." style={{ ...inputSmall, minHeight: 50, resize: 'vertical' }} /></div>
           <div style={{ display: 'flex', gap: 6 }}>

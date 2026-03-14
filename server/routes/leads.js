@@ -508,7 +508,7 @@ router.get('/follow-ups/due', auth, async (req, res) => {
 // ============================================================
 router.get('/', auth, async (req, res) => {
   try {
-    const { status, counselor, urgency, search, sort, order, limit, offset, category } = req.query;
+    const { status, stage, counselor, urgency, search, sort, order, limit, offset, category } = req.query;
     let where = [];
     let params = [];
     let i = 1;
@@ -528,6 +528,7 @@ router.get('/', auth, async (req, res) => {
     }
 
     if (status && status !== 'all') { where.push(`status = $${i++}`); params.push(status); }
+    if (stage && stage !== 'all') { where.push(`COALESCE(stage, 'new') = $${i++}`); params.push(stage); }
     if (urgency && urgency !== 'all') { where.push(`urgency_level = $${i++}`); params.push(urgency); }
     if (search) {
       where.push(`(
@@ -540,7 +541,7 @@ router.get('/', auth, async (req, res) => {
     }
 
     const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
-    const sortField = ['created_at', 'first_name', 'last_name', 'email', 'updated_at', 'nationality', 'status', 'priority'].includes(sort) ? sort : 'created_at';
+    const sortField = ['created_at', 'first_name', 'last_name', 'email', 'updated_at', 'nationality', 'status', 'priority', 'stage'].includes(sort) ? sort : 'created_at';
     const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
     const lim = Math.min(parseInt(limit) || 100, 500);
     const off = parseInt(offset) || 0;

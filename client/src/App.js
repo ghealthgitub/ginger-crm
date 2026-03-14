@@ -1629,14 +1629,9 @@ function CRMApp({ user, onLogout }) {
                 <span style={{ fontSize: 16 }}>🔗</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Source</span>
               </div>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}>
-                <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page URL</div>
-                <div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4 }}>{contact.page_url ? <a href={cleanUrl(contact.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none' }}>{contact.page_title || cleanUrl(contact.page_url)}</a> : '—'}</div>
-              </div>
-              <div style={{ padding: '8px 14px' }}>
-                <div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div>
-                <div style={{ fontSize: 12, color: C.slateDark }}>{contact.referrer || 'Direct'}</div>
-              </div>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}><EF label="Page URL" value={contact.page_url} field="page_url" onSave={saveContactField} placeholder="https://..." /></div>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}><EF label="Page Title" value={contact.page_title} field="page_title" onSave={saveContactField} placeholder="Page title" /></div>
+              <div><EF label="Referrer" value={contact.referrer} field="referrer" onSave={saveContactField} placeholder="e.g. Google, WhatsApp, Direct..." /></div>
             </div>
 
             {/* Counselor & Notes */}

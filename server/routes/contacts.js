@@ -170,7 +170,7 @@ router.patch('/:contactId', auth, async (req, res) => {
     const allowed = [
       'prefix', 'first_name', 'last_name', 'email', 'isd', 'phone',
       'nationality', 'contact_type', 'relationship_type', 'contact_preference',
-      'assigned_counselor', 'notes',
+      'assigned_counselor', 'notes', 'page_url', 'page_title', 'referrer',
     ];
     const updates = [];
     const params = [];

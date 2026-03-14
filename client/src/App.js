@@ -654,7 +654,7 @@ function CRMApp({ user, onLogout }) {
     { key: 'lead', label: 'Lead', default: true },
     { key: 'contact', label: 'Contact', default: true },
     { key: 'treatment', label: 'Treatment', default: true },
-    { key: 'status', label: 'Status', default: true },
+    { key: 'status', label: 'Stage', default: true },
     { key: 'counselor', label: 'Counselor', default: true },
     { key: 'added', label: 'Added', default: true },
     { key: 'urgency', label: 'Urgency', default: false },
@@ -747,7 +747,7 @@ function CRMApp({ user, onLogout }) {
                   <div style={{ fontSize: 13, fontWeight: 500, color: C.dark }}>{l.treatment_sought || l.service_type || '—'}</div>
                   {l.urgency_level && <span style={{ fontSize: 10, fontWeight: 700, color: URGENCY_COLORS[l.urgency_level] || C.slate, background: `${URGENCY_COLORS[l.urgency_level] || C.slate}10`, padding: '1px 6px', borderRadius: 4, marginTop: 2, display: 'inline-block' }}>{l.urgency_level}</span>}
                 </td>}
-                {visibleCols.includes('status') && <td style={tdV}><StatusBadge status={l.status} /></td>}
+                {visibleCols.includes('status') && <td style={tdV}>{(() => { const st = STAGES.find(s => s.key === (l.stage || 'new')) || STAGES[0]; return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 6, fontSize: 10.5, fontWeight: 600, color: st.color, background: `${st.color}12`, letterSpacing: 0.3, whiteSpace: 'nowrap', fontFamily: FONT }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: st.color, flexShrink: 0 }} />{st.label}</span>; })()}</td>}
                 {visibleCols.includes('counselor') && <td style={tdV}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <CounselorAvatar name={l.assigned_counselor} size={26} />
@@ -874,16 +874,30 @@ function CRMApp({ user, onLogout }) {
 
         <div style={{ padding: '18px 22px' }}>
           {activeTab === 'overview' && (<>
-            {/* Lead Source */}
-            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden', transition: 'all 0.25s' }}>
+            {/* Lead Source (editable) */}
+            <div style={{ background: C.white, borderRadius: 10, border: '1.5px solid #d0d5dd', marginBottom: 16, overflow: 'hidden' }}>
               <div style={{ padding: '13px 18px', borderBottom: '1.5px solid #d0d5dd', background: '#f8f9fb', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 16 }}>🔗</span><span style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: FONT }}>Lead Source</span></div>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Source URL</div><div style={{ fontSize: 12, color: C.blue, wordBreak: 'break-all', fontFamily: 'monospace', lineHeight: 1.4, userSelect: 'all' }}>{lead.page_url || lead.referrer || '—'}</div></div>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Page Title</div><div style={{ fontSize: 13, fontWeight: 600 }}>{lead.page_url ? <a href={cleanUrl(lead.page_url)} target="_blank" rel="noreferrer" style={{ color: C.blue, textDecoration: 'none', borderBottom: `1px dashed ${C.blue}40` }}>{lead.page_title || 'View Page'}</a> : <span style={{ color: C.dark }}>{lead.page_title || '—'}</span>}</div></div>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 14px' }}><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Referrer</div><div style={{ fontSize: 12, color: C.slateDark, wordBreak: 'break-all' }}>{lead.referrer || 'Direct'}</div></div>
-              <div style={{ padding: '6px 14px', background: `${C.blue}03`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.slateLight }}><span>Enquiry: {fmtDate(lead.created_at)}</span><span style={{ fontFamily: 'monospace', fontSize: 10 }}>ID: {lead.lead_id}</span></div>
-              {lead.contact_id && <div style={{ padding: '8px 14px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div><div style={{ fontSize: 10, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Linked Contact</div><span style={{ fontSize: 12, fontFamily: 'monospace', color: C.cyan }}>{lead.contact_id}</span></div>
-                <button onClick={async () => { try { const full = await contactsApi.get(lead.contact_id); setSelectedContact(full); setView('contact_detail'); } catch(e) { console.error(e); }}} style={{ ...btnSmallGhost, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>⊕ View Contact</button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e5e7eb' }}>
+                <EF label="Source URL" value={lead.page_url} field="page_url" onSave={async (field, value) => {
+                  await saveField(field, value);
+                  if (value && value.startsWith('http')) {
+                    try {
+                      const url = new URL(value);
+                      await saveField('referrer', url.origin + '/');
+                      if (!lead.page_title) {
+                        const path = url.pathname.replace(/\//g, ' ').replace(/-/g, ' ').trim();
+                        if (path) await saveField('page_title', path.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+                      }
+                    } catch(e) {}
+                  }
+                }} placeholder="https://..." />
+                <EF label="Page Title" value={lead.page_title} field="page_title" onSave={saveField} placeholder="Page title" />
+              </div>
+              <div style={{ borderBottom: '1px solid #e5e7eb' }}><EF label="Referrer" value={lead.referrer} field="referrer" onSave={saveField} placeholder="e.g. https://www.google.com/" /></div>
+              <div style={{ padding: '8px 18px', background: '#f8f9fb', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.slateLight }}><span>Enquiry: {fmtDate(lead.created_at)}</span><span style={{ fontFamily: 'monospace', fontSize: 10 }}>ID: {lead.lead_id}</span></div>
+              {lead.contact_id && <div style={{ padding: '10px 18px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div><div style={{ fontSize: 11, color: C.slateLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>Linked Contact</div><span style={{ fontSize: 13, fontFamily: 'monospace', color: C.navy, fontWeight: 600 }}>{lead.contact_id}</span></div>
+                <button onClick={async () => { try { const full = await contactsApi.get(lead.contact_id); setSelectedContact(full); setView('contact_detail'); } catch(e) { console.error(e); }}} style={{ ...btnSmallGhost, fontSize: 11 }}>View Contact →</button>
               </div>}
             </div>
 
@@ -1528,7 +1542,7 @@ function CRMApp({ user, onLogout }) {
   // ---- CONTACT DETAIL ----
   const ContactDetail = () => {
     const [showCreateLead, setShowCreateLead] = useState(false);
-    const [newLeadData, setNewLeadData] = useState({ service_type: '', treatment_sought: '', message: '', priority: 'medium' });
+    const [newLeadData, setNewLeadData] = useState({ treatment_sought: '', message: '', urgency_level: '', contact_preference: contact?.contact_preference || '', stage: 'new' });
     const [creating, setCreating] = useState(false);
     const contact = selectedContact;
     if (!contact) return null;
@@ -1549,7 +1563,7 @@ function CRMApp({ user, onLogout }) {
           const updated = await contactsApi.get(contact.contact_id);
           setSelectedContact(updated);
           setShowCreateLead(false);
-          setNewLeadData({ service_type: '', treatment_sought: '', message: '', priority: 'medium' });
+          setNewLeadData({ treatment_sought: '', message: '', urgency_level: '', contact_preference: contact?.contact_preference || '', stage: 'new' });
           fetchData(); // Refresh leads list too
         }
       } catch (e) { console.error('Create lead failed:', e); }
@@ -1651,16 +1665,19 @@ function CRMApp({ user, onLogout }) {
             {showCreateLead && (
               <div style={{ background: C.orangeBg, border: `1.5px solid ${C.orange}30`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.orange, marginBottom: 10, fontFamily: FONT }}>Create New Lead for {contact.first_name}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <div><label style={lblSm}>Service Type</label><input value={newLeadData.service_type} onChange={e => setNewLeadData({...newLeadData, service_type: e.target.value})} placeholder="e.g. Medical Tourism" style={inputSmall} /></div>
-                  <div><label style={lblSm}>Treatment Sought</label><input value={newLeadData.treatment_sought} onChange={e => setNewLeadData({...newLeadData, treatment_sought: e.target.value})} placeholder="e.g. Cardiac Surgery" style={inputSmall} /></div>
-                </div>
+                <div style={{ marginBottom: 8 }}><label style={lblSm}>Treatment Sought</label><input value={newLeadData.treatment_sought} onChange={e => setNewLeadData({...newLeadData, treatment_sought: e.target.value})} placeholder="e.g. Cardiac Surgery, Knee Replacement..." style={inputSmall} /></div>
                 <div style={{ marginBottom: 8 }}><label style={lblSm}>Message / Notes</label><textarea value={newLeadData.message} onChange={e => setNewLeadData({...newLeadData, message: e.target.value})} placeholder="Initial enquiry details..." style={{ ...inputSmall, minHeight: 60, resize: 'vertical' }} /></div>
-                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                  <label style={lblSm}>Priority:</label>
-                  {PRIORITIES.map(p => (
-                    <button key={p.key} onClick={() => setNewLeadData({...newLeadData, priority: p.key})} style={{ padding: '3px 10px', borderRadius: 5, border: `1.5px solid ${newLeadData.priority === p.key ? p.color : C.border}`, background: newLeadData.priority === p.key ? `${p.color}15` : C.white, color: newLeadData.priority === p.key ? p.color : C.slate, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{p.label}</button>
-                  ))}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                  <div><label style={lblSm}>Urgency</label><select value={newLeadData.urgency_level} onChange={e => setNewLeadData({...newLeadData, urgency_level: e.target.value})} style={inputSmall}><option value="">Select...</option><option>Emergency</option><option>Urgent</option><option>Semi-Urgent</option><option>Routine</option></select></div>
+                  <div><label style={lblSm}>Contact Via</label><select value={newLeadData.contact_preference} onChange={e => setNewLeadData({...newLeadData, contact_preference: e.target.value})} style={inputSmall}><option value="">Select...</option><option value="whatsapp">WhatsApp</option><option value="phone">Phone</option><option value="email">Email</option><option value="telegram">Telegram</option></select></div>
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={lblSm}>Pipeline Stage</label>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
+                    {STAGES.map(st => (
+                      <button key={st.key} onClick={() => setNewLeadData({...newLeadData, stage: st.key})} style={{ padding: '4px 10px', borderRadius: 14, border: `1.5px solid ${newLeadData.stage === st.key ? st.color : C.border}`, background: newLeadData.stage === st.key ? `${st.color}12` : C.white, color: newLeadData.stage === st.key ? st.color : C.slate, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{st.label}</button>
+                    ))}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button onClick={handleCreateLead} disabled={creating} style={{ ...btnSmallTeal, opacity: creating ? 0.6 : 1 }}>{creating ? 'Creating...' : 'Create Lead'}</button>

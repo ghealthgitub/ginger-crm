@@ -1541,10 +1541,10 @@ function CRMApp({ user, onLogout }) {
 
   // ---- CONTACT DETAIL ----
   const ContactDetail = () => {
-    const [showCreateLead, setShowCreateLead] = useState(false);
-    const [newLeadData, setNewLeadData] = useState({ treatment_sought: '', message: '', urgency_level: '', contact_preference: contact?.contact_preference || '', stage: 'new' });
-    const [creating, setCreating] = useState(false);
     const contact = selectedContact;
+    const [showCreateLead, setShowCreateLead] = useState(false);
+    const [newLeadData, setNewLeadData] = useState({ treatment_sought: '', message: '', urgency_level: '', contact_preference: '', stage: 'new' });
+    const [creating, setCreating] = useState(false);
     if (!contact) return null;
 
     const saveContactField = async (field, value) => {
@@ -1563,7 +1563,7 @@ function CRMApp({ user, onLogout }) {
           const updated = await contactsApi.get(contact.contact_id);
           setSelectedContact(updated);
           setShowCreateLead(false);
-          setNewLeadData({ treatment_sought: '', message: '', urgency_level: '', contact_preference: contact?.contact_preference || '', stage: 'new' });
+          setNewLeadData({ treatment_sought: '', message: '', urgency_level: '', contact_preference: '', stage: 'new' });
           fetchData(); // Refresh leads list too
         }
       } catch (e) { console.error('Create lead failed:', e); }

@@ -207,6 +207,11 @@ router.post('/webhook', async (req, res) => {
         }
       }
 
+      console.log(`[Lead Assignment] IST: ${currentTime}, Day: ${currentDay} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][currentDay]}), Schedules found: ${schedRes.rows.length}, On shift: [${onShift.join(', ')}]`);
+      if (schedRes.rows.length > 0) {
+        schedRes.rows.forEach(s => console.log(`  → ${s.display_name}: ${s.slot_start?.substring(0,5)}-${s.slot_end?.substring(0,5)}`));
+      }
+
       // Also check users with shift_start/shift_end set directly (fallback)
       if (onShift.length === 0) {
         const fallbackRes = await pool.query(
@@ -235,7 +240,9 @@ router.post('/webhook', async (req, res) => {
         onShift.forEach(c => counts[c] = 0);
         countRes.rows.forEach(r => { if (counts[r.assigned_counselor] !== undefined) counts[r.assigned_counselor] = parseInt(r.cnt); });
         counselor = Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
+        console.log(`[Lead Assignment] Round-robin counts (24h):`, counts, `→ Assigned: ${counselor}`);
       } else {
+        console.log(`[Lead Assignment] No one on shift! Falling back to all-staff round-robin.`);
         // No one on shift — round-robin among all active users with schedules
         const allStaff = await pool.query(
           `SELECT DISTINCT u.display_name FROM users u WHERE u.is_active = true AND (u.shift_start IS NOT NULL OR EXISTS (SELECT 1 FROM counselor_schedules cs WHERE cs.user_id = u.id AND cs.is_active = true))`
